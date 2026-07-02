@@ -8,15 +8,11 @@ LABEL org.opencontainers.image.source="https://github.com/cverna/ai-agents"
 
 USER root
 
-RUN ARCH=$([ "$TARGETARCH" = "amd64" ] && echo "x86_64" || echo "arm64") && \
-    echo "ARCH=${ARCH}" >> /etc/environment && \
-    echo "OPENCODE_ARCH=$([ "$TARGETARCH" = "amd64" ] && echo "x64" || echo "arm64")" >> /etc/environment
-
 RUN dnf install -y --setopt=install_weak_deps=False \
     dracut cpio zstd xz binutils elfutils bpftool dwarves vim-common \
     && dnf clean all && rm -rf /var/cache/dnf
 
-RUN ARCH=$(grep ARCH /etc/environment | cut -d= -f2) && \
+RUN ARCH=$([ "$TARGETARCH" = "amd64" ] && echo "x86_64" || echo "arm64") && \
     VER=$(curl -fsSL https://api.github.com/repos/ankitpokhrel/jira-cli/releases/latest | jq -r '.tag_name' | sed 's/^v//') && \
     curl -fsSL "https://github.com/ankitpokhrel/jira-cli/releases/download/v${VER}/jira_${VER}_linux_${ARCH}.tar.gz" | \
     tar xz -C /tmp && mv /tmp/jira_${VER}_linux_${ARCH}/bin/jira /usr/local/bin/ && \
