@@ -1,0 +1,30 @@
+FROM quay.io/fedora/fedora:44
+
+ARG TARGETARCH
+
+LABEL org.opencontainers.image.title="AI Agents Base"
+LABEL org.opencontainers.image.description="Minimal base image for AI agents"
+LABEL org.opencontainers.image.source="https://github.com/cverna/ai-agents"
+
+RUN dnf install -y --setopt=install_weak_deps=False \
+    jq yq git curl tar ripgrep podman-remote gh glab koji bodhi-client \
+    && dnf clean all && rm -rf /var/cache/dnf
+
+RUN ln -s /usr/bin/podman-remote /usr/local/bin/podman
+
+RUN ARCH=$([ "$TARGETARCH" = "amd64" ] && echo "x64" || echo "arm64") && \
+    curl -fsSL "https://github.com/anomalyco/opencode/releases/latest/download/opencode-linux-${ARCH}.tar.gz" | \
+    tar xz -C /tmp && mv /tmp/opencode /usr/local/bin/ && rm -rf /tmp/opencode.tar.gz
+
+COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+RUN useradd -m -u 1000 -s /bin/bash agent && \
+    mkdir -p /home/agent/.config /home/agent/.local /workspace && \
+    chown -R agent:agent /home/agent /workspace
+
+WORKDIR /workspace
+USER agent
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["opencode"]
