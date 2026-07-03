@@ -6,8 +6,10 @@ LABEL org.opencontainers.image.source="https://github.com/cverna/ai-agents"
 
 USER root
 
+ENV KRB5CCNAME=FILE:/tmp/krb5cc
+
 RUN dnf install -y --setopt=install_weak_deps=False \
-    fedora-packager krb5-workstation \
+    fedora-packager krb5-workstation krb5-pkinit fedora-packager-kerberos \
     && dnf clean all && rm -rf /var/cache/dnf
 
 COPY opencode.json AGENTS.md /opt/opencode-config/

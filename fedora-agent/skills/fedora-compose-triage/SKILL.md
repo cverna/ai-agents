@@ -12,7 +12,7 @@ Run **one compose-tracker issue** through a **fixed sequence** of stages. Each s
 
 **Input (required):** `ISSUE_NUMBER` (integer from compose-tracker-issues)
 
-**Related skills:** `fedora-compose-failures` (deep analysis), `fedora-compose` (process knowledge), `fedora-versions` (release info)
+**Related skills:** `fedora-ftbfs-search` (bug search)
 
 ---
 
@@ -163,8 +163,10 @@ curl -s "https://kojipkgs.fedoraproject.org//work/tasks/{last4}/{task-id}/build.
 
 | Pattern | Meaning |
 |---------|---------|
-| `nothing provides` | Missing dependency |
-| `python3.XXdist()` | Python namespace mismatch |
+| `nothing provides` | Missing dependency - extract package name |
+| `package.*retired\|has been retired` | Package retired - consider image removal |
+| `python\(abi\) = ([0-9.]+)` | Python ABI mismatch - rebuild for captured version |
+| `python3\.([0-9]+)dist\(\)` | Python namespace mismatch |
 | `perl(:MODULE_COMPAT_)` | Perl namespace mismatch |
 | `nodejs(abi)` | Node.js ABI mismatch |
 | `conflicting requests` | Dependency conflict |
@@ -173,15 +175,26 @@ curl -s "https://kojipkgs.fedoraproject.org//work/tasks/{last4}/{task-id}/build.
 | `LoraxError` | Boot ISO creation failure |
 | `timeout` | Network/infrastructure issue |
 
+**Extract all dependency errors per image:**
+- Find all `nothing provides` lines in log
+- Capture Python version from `python(abi) = X.YY` exactly
+- Report all affected packages, not just the first error
+
+**Detect Python version mismatch:**
+1. Extract buildroot Python version: `grep -E "python3-[0-9]+\.[0-9]+\.[0-9]+" log` (e.g., `python3-3.15.0~b3-1.fc45`)
+2. Compare to `python(abi) = X.YY` in error messages
+3. If versions differ, the root cause is: packages not rebuilt for current Python version
+
 **Output:**
 
 ```markdown
 ### Logs (excerpt)
 
-#### Task {task-id} ({variant} {arch})
+#### {ImageName} (Task {task-id})
 - **Error type:** {BuildrootError | DependencyResolution | Timeout | Other}
+- **Python version:** buildroot has {X.Y}, packages need {A.B} ABI (if applicable)
+- **All missing dependencies:** {list all "nothing provides" packages}
 - **Key message:** {first meaningful error line}
-- **Log URL:** https://kojipkgs.fedoraproject.org/...
 
 (Repeat for each distinct failure pattern - group similar failures)
 ```
@@ -196,9 +209,11 @@ curl -s "https://kojipkgs.fedoraproject.org//work/tasks/{last4}/{task-id}/build.
 
 | Category | Root Cause | Typical Error | Resolution |
 |----------|------------|---------------|------------|
-| **dependency** | Namespace mismatch | `python3.XXdist()`, `perl(:MODULE_COMPAT_)` | Rebuild package |
+| **dependency** | Python version upgrade | `python(abi) = X.YY` in errors, newer Python in buildroot | Rebuild packages for current Python version |
+| **dependency** | Namespace mismatch | `perl(:MODULE_COMPAT_)`, `nodejs(abi)` | Rebuild package |
 | **dependency** | Missing package | `nothing provides PACKAGE` | Tag or replace package |
 | **dependency** | Version conflict | `requires >= X but Y available` | Update package |
+| **dependency** | Package retired | `package has been retired` | Remove from image or retire image |
 | **infrastructure** | Buildroot failure | `BuildrootError`, mock errors | Check buildvm, retry |
 | **infrastructure** | Network issue | `timeout`, `connection refused` | Retry, check infra |
 | **configuration** | Excluded package | `matches only excluded` | Update treefile/profile |
@@ -208,8 +223,9 @@ curl -s "https://kojipkgs.fedoraproject.org//work/tasks/{last4}/{task-id}/build.
 **Analysis workflow:**
 
 1. Check if failures share common package/namespace
-2. Look for infrastructure issues affecting multiple tasks
-3. Check if compose repo had issues (timing, stale data)
+2. For Python errors: compare `python(abi) = X.YY` to buildroot Python version → if different, root cause is "Python version upgrade"
+3. Look for infrastructure issues affecting multiple tasks
+4. Check if compose repo had issues (timing, stale data)
 
 **Output:**
 
@@ -257,35 +273,69 @@ curl -s "https://kojipkgs.fedoraproject.org//work/tasks/{last4}/{task-id}/build.
 
 ## Stage 6 — Summarize (triage conclusion)
 
-**Agent role:** Produce handoff package for humans.
+**Agent role:** Produce concise handoff for humans.
 
-**Output:**
+**Output format:**
 
 ```markdown
-### Triage Summary
+### Affected Images
 
-**Summary:** {One paragraph describing the failure, root cause, and impact}
+- **ImageName** - Missing `package-name` needed by dependent-package
+- **ImageName** - Python version mismatch: buildroot has Python 3.15, packages need 3.14 ABI. Rebuild needed for: pkg1, pkg2. Missing deps: `python3.14dist(module1)`, `python3.14dist(module2)`
+- **ImageName** - Multiple packages retired (pkg1, pkg2, pkg3) - consider image removal
+```
 
-**Affected images:**
-- {Variant} ({arch}) - {failure type}
-- ...
+**Guidelines:**
+- One line per failed image - no exceptions
+- List all missing dependencies explicitly (don't summarize or truncate)
+- Do NOT group images with "Other..." or "Similar..." summaries
+- Every image gets its own line with its specific packages, even if root cause is shared
+- For Python ABI issues: ALWAYS state both versions (buildroot X.Y, packages need A.B ABI)
+- Distinguish between packages needing rebuild vs missing dependency modules
+- Note if packages are retired (suggest image removal)
+- Link to existing bugs if known
+- Do not repeat information already in the issue (compose ID, logs, phase timing)
 
-**Root cause:** {dependency issue | infrastructure failure | configuration problem | unknown}
+**Example output (follow this format exactly):**
 
-**Suggested actions:**
-1. {Specific action with owner if known}
-2. {Additional investigation if needed}
-3. {Related issues to check}
+```markdown
+### Affected Images
 
-**Key logs:**
-- [Global log]({url})
-- [{Variant} {arch} log]({url})
+- **COSMIC-Atomic** - Missing `pop-sound-theme` needed by cosmic-settings-daemon
+- **MiracleWM** - Missing `libmirwayland.so.5(MIRWAYLAND_2.17)` needed by miracle-wm-0.9.1-1.fc45
+- **Games** - Python version mismatch: buildroot has Python 3.15, packages need 3.14 ABI. Rebuild needed for: pychess-1.0.5-3.fc44. Missing deps: `python3.14dist(psutil)`, `python3.14dist(websockets)`, `python3.14dist(pygobject)`, `python3.14dist(pexpect)`, `python3.14dist(pycairo)`, `python3.14dist(sqlalchemy)`
+- **Robotics** - Python version mismatch: buildroot has Python 3.15, packages need 3.14 ABI. Rebuild needed for: python3-vcstool-0.3.0-16.fc44. Missing deps: `python3.14dist(setuptools)`, `python3.14dist(pyyaml)`
+- **Scientific** - Python version mismatch: buildroot has Python 3.15, packages need 3.14 ABI. Rebuild needed for: python3-spyder-kernels-3.1.1-2.fc44. Missing deps: `python3.14dist(pyzmq)`, `python3.14dist(ipykernel)`, `python3.14dist(jupyter-client)`, `python3.14dist(traitlets)`, `python3.14dist(wurlitzer)`, `python3.14dist(packaging)`, `python3.14dist(cloudpickle)`, `python3.14dist(pyxdg)`
+- **Scientific_KDE** - Python version mismatch: buildroot has Python 3.15, packages need 3.14 ABI. Rebuild needed for: python3-spyder-kernels-3.1.1-2.fc44. Missing deps: `python3.14dist(pyzmq)`, `python3.14dist(ipykernel)`, `python3.14dist(jupyter-client)`, `python3.14dist(traitlets)`, `python3.14dist(wurlitzer)`, `python3.14dist(packaging)`, `python3.14dist(cloudpickle)`, `python3.14dist(pyxdg)`
+- **Astronomy_KDE** - Python version mismatch: buildroot has Python 3.15, packages need 3.14 ABI. Rebuild needed for: python3-astroquery-0.4.11-3.fc45, python3-spyder-6.1.0-2.fc44, python3-ginga-5.5.1-2.fc44. Missing deps: `python3.14dist(numpy)`, `python3.14dist(astropy)`, `python3.14dist(beautifulsoup4)`, `python3.14dist(html5lib)`, `python3.14dist(keyring)`, `python3.14dist(pyvo)`, `python3.14dist(requests)` (and 35 more)
+- **SoaS** - Multiple sugar packages retired (sugar, sugar-toolkit-gtk3, sugar-browse, sugar-cp-all, sugar-log, sugar-read) - consider image removal
+```
 
-**Compose info:**
-- Compose ID: {id}
-- Started: {date}
-- Duration: {if available}
-- Phase failures: {list from pungi.global.log}
+**Common mistakes to avoid:**
+- ❌ `Labs-Scientific / Scientific_KDE / Scientific-Vagrant — ...` (grouping with "/")
+- ❌ `Other Labs/Spins — Likely same Python ABI mismatch...` (vague summary)
+- ❌ `Robotics — python(abi)=3.14 needed` (missing buildroot version)
+
+**Bug search:**
+1. Extract all packages needing rebuild from the analysis
+2. Use `fedora-ftbfs-search` skill with packages and Fedora release number
+3. Append the "Related Bugs" section to the output
+
+**Complete output example:**
+
+```markdown
+### Affected Images
+
+- **Robotics** — Python version mismatch: buildroot has Python 3.15, packages need 3.14 ABI. Rebuild needed for: python3-vcstool-0.3.0-16.fc44. Missing deps: `python3.14dist(setuptools)`, `python3.14dist(pyyaml)`
+- **Games** — Python version mismatch: buildroot has Python 3.15, packages need 3.14 ABI. Rebuild needed for: pychess-1.0.5-3.fc44. Missing deps: `python3.14dist(psutil)`, `python3.14dist(websockets)`
+
+### Related Bugs
+
+| Bug ID | Summary | Status |
+|--------|---------|--------|
+| [#2485978](https://bugzilla.redhat.com/2485978) | F45FailsToInstall: python3-vcstool | NEW |
+| [#2485737](https://bugzilla.redhat.com/2485737) | F45FailsToInstall: pychess | NEW |
+| [#2434943](https://bugzilla.redhat.com/2434943) | pychess: FTBFS in Fedora rawhide/f44 | NEW |
 ```
 
 ---
@@ -297,6 +347,7 @@ curl -s "https://kojipkgs.fedoraproject.org//work/tasks/{last4}/{task-id}/build.
 3. On curl/network errors, report the error and continue with available data.
 4. **Do not post comments** to the issue - output only.
 5. Use `fedora-compose-failures` skill for deeper dependency analysis if needed.
+6. Use `fedora-ftbfs-search` skill to find existing FTBFS/FTI bugs for packages needing rebuild.
 
 ---
 
@@ -305,9 +356,6 @@ curl -s "https://kojipkgs.fedoraproject.org//work/tasks/{last4}/{task-id}/build.
 ```bash
 # Fetch issue
 curl -s "https://forge.fedoraproject.org/api/v1/repos/releng/compose-tracker-issues/issues/{ISSUE_NUMBER}" | jq '.'
-
-# Fetch global log
-curl -s "https://kojipkgs.fedoraproject.org/compose/{type}/{compose-id}/logs/global/pungi.global.log" | tail -100
 
 # List Koji task logs
 curl -s "https://kojipkgs.fedoraproject.org//work/tasks/{last4}/{task-id}/"
@@ -322,5 +370,8 @@ curl -s "https://kojipkgs.fedoraproject.org//work/tasks/{last4}/{task-id}/mock_o
 curl -s "https://kojipkgs.fedoraproject.org//work/tasks/{last4}/{child-task-id}/image-root.x86_64.log" | tail -200
 
 # Search for dependency errors in log
-grep -E "nothing provides|Problem:|conflicting requests|python3\.[0-9]+dist" {log-file}
+grep -E "nothing provides|Problem:|conflicting requests|retired|python\(abi\)" {log-file}
+
+# Detect buildroot Python version
+grep -E "python3-[0-9]+\.[0-9]+\.[0-9]+" {log-file} | head -1
 ```
