@@ -27,4 +27,9 @@ if [ -d /opt/opencode-agents ]; then
     cp /opt/opencode-agents/*.md "$HOME/.config/opencode/agents/" 2>/dev/null || true
 fi
 
+if [ -f /opt/tea-config/config.yml ]; then
+    mkdir -p "$HOME/.config/tea"
+    cp /opt/tea-config/config.yml "$HOME/.config/tea/config.yml"
+fi
+
 exec "$@"
