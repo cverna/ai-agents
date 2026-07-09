@@ -18,9 +18,15 @@ RUN ARCH=$([ "$TARGETARCH" = "amd64" ] && echo "amd64" || echo "arm64") && \
     curl -fsSL "https://gitea.com/gitea/tea/releases/download/v${VER}/tea-${VER}-linux-${ARCH}" \
     -o /usr/local/bin/tea && chmod +x /usr/local/bin/tea
 
+RUN git clone --depth=1 --filter=blob:none --sparse \
+        https://forge.fedoraproject.org/ai-ml/skills-library.git /tmp/skills-library && \
+    cd /tmp/skills-library && \
+    git sparse-checkout set skills && \
+    cp -r skills/* /opt/opencode-skills/ && \
+    rm -rf /tmp/skills-library
+
 COPY opencode.json AGENTS.md /opt/opencode-config/
 COPY commands/ /opt/opencode-commands/
-COPY skills/ /opt/opencode-skills/
 COPY agents/ /opt/opencode-agents/
 COPY config/tea.yml /opt/tea-config/config.yml
 
