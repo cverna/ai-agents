@@ -14,7 +14,7 @@ Uses `just` (command runner) + `podman`. Key commands:
 | `just coreos-agent` | Build coreos-agent |
 | `just fedora-agent` | Build fedora-agent |
 
-**Rebuild base image when**: modifying `base/Dockerfile.base` or `scripts/entrypoint.sh`
+**Rebuild base image when**: modifying [`base/Dockerfile.base`](base/Dockerfile.base) or [`scripts/entrypoint.sh`](scripts/entrypoint.sh)
 **Rebuild agent image when**: modifying agent-specific files (`Dockerfile`, `opencode.json`, `AGENTS.md`, `skills/`, `agents/`, `commands/`)
 
 ## Agent Directory Structure
@@ -33,7 +33,7 @@ Each agent (`coreos-agent/`, `fedora-agent/`) is self-contained:
 
 ## Runtime Behavior
 
-`scripts/entrypoint.sh` runs on container start and copies:
+[`scripts/entrypoint.sh`](scripts/entrypoint.sh) runs on container start and copies:
 - `/opt/opencode-config/` → `~/.config/opencode/`
 - `/opt/opencode-skills/` → `~/.config/opencode/skills/`
 - `/opt/opencode-commands/` → `~/.config/opencode/commands/`
