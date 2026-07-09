@@ -25,7 +25,8 @@
       "*.env.*": "deny",
       "*.env.example": "allow",
       "~/.config/*": "deny",
-      "~/.config/opencode/*": "allow"
+      "~/.config/opencode/*": "allow",
+      "/run/secrets/*": "deny"
     },
     "bash": {
       "env": "deny",
