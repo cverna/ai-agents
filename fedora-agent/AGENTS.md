@@ -11,7 +11,7 @@ This container provides CLI tools for Fedora compose triage and package manageme
 | `fedpkg` | Fedora package management |
 | `gh` | GitHub CLI |
 | `glab` | GitLab CLI |
-| `tea` | Gitea CLI |
+| `gitea-mcp` | Gitea MCP server |
 | `podman` | Container management |
 | `jq` | JSON processor |
 | `yq` | YAML processor |
@@ -22,6 +22,6 @@ This container provides CLI tools for Fedora compose triage and package manageme
 
 You must use the `gh` cli to interact with GitHub
 You must use the `glab` cli to interact with GitLab
-You must use the `tea` cli to interact with Gitea
+You must use the gitea-mcp MCP server to interact with Gitea (forge.fedoraproject.org)
 
 You must use rg instead of grep.

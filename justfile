@@ -98,6 +98,15 @@ clean-all: clean
     podman builder prune -f
 
 # ============================================================================
+# SECRETS SETUP (run once)
+# ============================================================================
+
+# Create podman secrets required by fedora-agent (run once before first use)
+# Usage: GITEA_TOKEN_FILE=~/.config/gitea/token just setup-secrets
+setup-secrets:
+    podman secret create gitea-token ${GITEA_TOKEN_FILE:-~/.config/gitea/token}
+
+# ============================================================================
 # RUN CONTAINERS
 # ============================================================================
 
@@ -113,6 +122,7 @@ run-fedora:
     podman run -it --rm \
         -v fedora-agent-config:/home/agent/.config \
         -v {{justfile_directory()}}:/workspace \
+        --secret gitea-token \
         {{registry}}/{{fedora_image}}:latest
 
 # Run coreos-agent with a shell
@@ -128,5 +138,6 @@ shell-fedora:
     podman run -it --rm \
         -v fedora-agent-config:/home/agent/.config \
         -v {{justfile_directory()}}:/workspace \
+        --secret gitea-token \
         --entrypoint /bin/bash \
         {{registry}}/{{fedora_image}}:latest

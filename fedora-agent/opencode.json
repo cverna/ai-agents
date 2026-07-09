@@ -1,6 +1,20 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "model": "opencode/deepseek-v4-flash-free",
+  "mcp": {
+    "gitea-mcp": {
+      "enabled": true,
+      "type": "local",
+      "command": [
+        "gitea-mcp",
+        "-t", "stdio",
+        "-H", "https://forge.fedoraproject.org"
+      ],
+      "environment": {
+        "GITEA_ACCESS_TOKEN_FILE": "/run/secrets/gitea-token"
+      }
+    }
+  },
   "permission": {
     "external_directory": {
       "/tmp/*": "allow"

@@ -9,14 +9,15 @@ USER root
 ENV KRB5CCNAME=FILE:/tmp/krb5cc
 
 RUN dnf install -y --setopt=install_weak_deps=False \
-    fedora-packager krb5-workstation krb5-pkinit fedora-packager-kerberos \
+    fedora-packager krb5-workstation krb5-pkinit fedora-packager-kerberos fedora-review \
+    golang go2rpm \
     && dnf clean all && rm -rf /var/cache/dnf
 
-RUN ARCH=$([ "$TARGETARCH" = "amd64" ] && echo "amd64" || echo "arm64") && \
-    VER=$(curl -fsSL https://gitea.com/api/v1/repos/gitea/tea/releases/latest | \
+RUN ARCH=$([ "$TARGETARCH" = "amd64" ] && echo "x86_64" || echo "arm64") && \
+    VER=$(curl -fsSL https://gitea.com/api/v1/repos/gitea/gitea-mcp/releases/latest | \
           jq -r '.tag_name | ltrimstr("v")') && \
-    curl -fsSL "https://gitea.com/gitea/tea/releases/download/v${VER}/tea-${VER}-linux-${ARCH}" \
-    -o /usr/local/bin/tea && chmod +x /usr/local/bin/tea
+    curl -fsSL "https://gitea.com/gitea/gitea-mcp/releases/download/v${VER}/gitea-mcp_Linux_${ARCH}.tar.gz" \
+    | tar -xz -C /usr/local/bin gitea-mcp && chmod +x /usr/local/bin/gitea-mcp
 
 RUN git clone --depth=1 --filter=blob:none --sparse \
         https://forge.fedoraproject.org/ai-ml/skills-library.git /tmp/skills-library && \
@@ -28,6 +29,5 @@ RUN git clone --depth=1 --filter=blob:none --sparse \
 COPY opencode.json AGENTS.md /opt/opencode-config/
 COPY commands/ /opt/opencode-commands/
 COPY agents/ /opt/opencode-agents/
-COPY config/tea.yml /opt/tea-config/config.yml
 
 USER agent
