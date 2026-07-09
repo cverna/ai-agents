@@ -7,7 +7,7 @@ LABEL org.opencontainers.image.description="Minimal base image for AI agents"
 LABEL org.opencontainers.image.source="https://github.com/cverna/ai-agents"
 
 RUN dnf install -y --setopt=install_weak_deps=False \
-    jq yq git curl tar ripgrep podman-remote gh glab koji bodhi-client \
+    jq yq git curl tar uv ripgrep podman-remote gh glab koji bodhi-client \
     && dnf clean all && rm -rf /var/cache/dnf
 
 RUN ln -s /usr/bin/podman-remote /usr/local/bin/podman
@@ -18,6 +18,14 @@ RUN ARCH=$([ "$TARGETARCH" = "amd64" ] && echo "x64" || echo "arm64") && \
 
 COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
+
+RUN uv pip install --system skillsaw
+
+RUN mkdir -p /opt/opencode-skills/skillsaw-onboard /opt/opencode-skills/skillsaw-fix && \
+    curl -fsSL "https://raw.githubusercontent.com/stbenjam/skillsaw/refs/heads/main/.agents/skills/skillsaw-onboard/SKILL.md" \
+         -o /opt/opencode-skills/skillsaw-onboard/SKILL.md && \
+    curl -fsSL "https://raw.githubusercontent.com/stbenjam/skillsaw/refs/heads/main/.agents/skills/skillsaw-fix/SKILL.md" \
+         -o /opt/opencode-skills/skillsaw-fix/SKILL.md
 
 RUN useradd -m -u 1000 -s /bin/bash agent && \
     mkdir -p /home/agent/.config /home/agent/.local /workspace && \
