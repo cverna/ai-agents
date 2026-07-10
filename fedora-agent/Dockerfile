@@ -27,6 +27,10 @@ RUN git clone --depth=1 --filter=blob:none --sparse \
     cp -r skills/* /opt/opencode-skills/ && \
     rm -rf /tmp/skills-library
 
+# Overlay local skill patches — files here override upstream versions.
+# Remove when upstream merges the corresponding PR.
+COPY skills/ /opt/opencode-skills/
+
 COPY opencode.json AGENTS.md /opt/opencode-config/
 COPY commands/ /opt/opencode-commands/
 COPY agents/ /opt/opencode-agents/
