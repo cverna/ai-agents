@@ -1,0 +1,93 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: fedora-agent-compose-check
+  namespace: communishift-coreos-agent
+  labels:
+    app: fedora-agent
+spec:
+  schedule: "0 10 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 1800
+      backoffLimit: 1
+      template:
+        metadata:
+          labels:
+            app: fedora-agent
+            job: compose-check
+        spec:
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+          containers:
+            - name: agent
+              image: ghcr.io/cverna/fedora-agent:latest
+              command: ["/bin/bash", "-c"]
+              args:
+                - |
+                  set -e
+
+                  # === Init: Set up writable home directory ===
+                  mkdir -p "$HOME/.config/opencode"
+
+                  # === Init: Copy OpenCode configs from image ===
+                  cp /opt/opencode-config/opencode.json "$HOME/.config/opencode/"
+                  cp /opt/opencode-config/AGENTS.md "$HOME/.config/opencode/"
+                  mkdir -p "$HOME/.config/opencode/commands"
+                  cp /opt/opencode-commands/*.md "$HOME/.config/opencode/commands/" 2>/dev/null || true
+                  mkdir -p "$HOME/.config/opencode/skills"
+                  cp -r /opt/opencode-skills/* "$HOME/.config/opencode/skills/"
+                  mkdir -p "$HOME/.config/opencode/agents"
+                  cp /opt/opencode-agents/*.md "$HOME/.config/opencode/agents/" 2>/dev/null || true
+
+                  echo "============================================"
+                  echo "[$(date)] Fedora Agent Compose Check starting..."
+                  echo "============================================"
+
+                  # === Run opencode with the compose-failure-investigator subagent ===
+                  RUN_TITLE="Compose Check $(date +%Y-%m-%d-%H%M)"
+                  opencode run \
+                    --dangerously-skip-permissions \
+                    --format json \
+                    --title "$RUN_TITLE" \
+                    "@compose-failure-investigator Analyse today's Fedora Rawhide compose failures"
+
+                  echo "============================================"
+                  echo "[$(date)] Compose Check complete: $RUN_TITLE"
+                  echo "============================================"
+              env:
+                - name: GITEA_ACCESS_TOKEN_FILE
+                  value: "/run/secrets/gitea-token"
+                - name: HOME
+                  value: "/tmp/agent"
+              volumeMounts:
+                - name: home
+                  mountPath: /tmp/agent
+                - name: gitea-token
+                  mountPath: /run/secrets
+                  readOnly: true
+              resources:
+                requests:
+                  memory: 1Gi
+                  cpu: 100m
+                limits:
+                  memory: 1Gi
+                  cpu: 500m
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: ["ALL"]
+                readOnlyRootFilesystem: false
+          volumes:
+            - name: home
+              emptyDir: {}
+            - name: gitea-token
+              secret:
+                secretName: fedora-agent-secrets
+                items:
+                  - key: gitea-token
+                    path: gitea-token

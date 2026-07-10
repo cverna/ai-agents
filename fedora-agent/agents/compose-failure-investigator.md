@@ -61,6 +61,13 @@ Always review AI generated content prior to use
 Rules:
 - Copy the Affected Images and Related Bugs content verbatim from Stage 6 output — do not summarize or alter it.
 - If there are no related bugs, omit the Related Bugs section entirely.
-- Output the final comment in a markdown code block so it is easy to copy.
-- If an existing comment already exist in the issue, do not add another one.
+- If an existing comment already exists in the issue, do not add another one.
+
+### Step 4 — Post comment
+
+Post the comment to the issue using the `gitea-mcp` MCP server tool `create_issue_comment`:
+- owner: `releng`
+- repo: `compose-tracker-issues`
+- index: the issue number from Step 1
+- body: the formatted comment from Step 3
 
