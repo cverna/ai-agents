@@ -9,10 +9,7 @@
         "gitea-mcp",
         "-t", "stdio",
         "-H", "https://forge.fedoraproject.org"
-      ],
-      "environment": {
-        "GITEA_ACCESS_TOKEN_FILE": "/run/secrets/gitea-token"
-      }
+      ]
     }
   },
   "permission": {
@@ -26,7 +23,8 @@
       "*.env.example": "allow",
       "~/.config/*": "deny",
       "~/.config/opencode/*": "allow",
-      "/run/secrets/*": "deny"
+      "/run/secrets/*": "deny",
+      "/run/gitea-secrets/*": "deny"
     },
     "bash": {
       "env": "deny",

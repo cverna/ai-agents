@@ -123,6 +123,7 @@ run-fedora:
         -v fedora-agent-config:/home/agent/.config \
         -v {{justfile_directory()}}:/workspace \
         --secret gitea-token \
+        -e GITEA_ACCESS_TOKEN_FILE=/run/secrets/gitea-token \
         {{registry}}/{{fedora_image}}:latest
 
 # Run coreos-agent with a shell
@@ -139,5 +140,6 @@ shell-fedora:
         -v fedora-agent-config:/home/agent/.config \
         -v {{justfile_directory()}}:/workspace \
         --secret gitea-token \
+        -e GITEA_ACCESS_TOKEN_FILE=/run/secrets/gitea-token \
         --entrypoint /bin/bash \
         {{registry}}/{{fedora_image}}:latest
