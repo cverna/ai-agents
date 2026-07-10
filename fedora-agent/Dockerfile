@@ -13,6 +13,7 @@ RUN dnf install -y --setopt=install_weak_deps=False \
     golang go2rpm \
     && dnf clean all && rm -rf /var/cache/dnf
 
+ARG TARGETARCH
 RUN ARCH=$([ "$TARGETARCH" = "amd64" ] && echo "x86_64" || echo "arm64") && \
     VER=$(curl -fsSL https://gitea.com/api/v1/repos/gitea/gitea-mcp/releases/latest | \
           jq -r '.tag_name | ltrimstr("v")') && \

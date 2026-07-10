@@ -51,8 +51,8 @@ all: base coreos-agent fedora-agent
 base-multiarch:
     @echo "Building {{base_image}} for linux/amd64 and linux/arm64..."
     podman manifest create {{registry}}/{{base_image}}:latest
-    podman build --platform linux/amd64 --manifest {{registry}}/{{base_image}}:latest -f base/Dockerfile.base .
-    podman build --platform linux/arm64 --manifest {{registry}}/{{base_image}}:latest -f base/Dockerfile.base .
+    podman build --platform linux/amd64 --build-arg TARGETARCH=amd64 --manifest {{registry}}/{{base_image}}:latest -f base/Dockerfile.base .
+    podman build --platform linux/arm64 --build-arg TARGETARCH=arm64 --manifest {{registry}}/{{base_image}}:latest -f base/Dockerfile.base .
     podman manifest push {{registry}}/{{base_image}}:latest docker://{{registry}}/{{base_image}}:latest
     podman manifest push {{registry}}/{{base_image}}:latest docker://{{registry}}/{{base_image}}:{{date_tag}}
     podman manifest rm {{registry}}/{{base_image}}:latest
@@ -61,8 +61,8 @@ base-multiarch:
 coreos-agent-multiarch:
     @echo "Building {{coreos_image}} for linux/amd64 and linux/arm64..."
     podman manifest create {{registry}}/{{coreos_image}}:latest
-    podman build --platform linux/amd64 --manifest {{registry}}/{{coreos_image}}:latest -f coreos-agent/Dockerfile coreos-agent/
-    podman build --platform linux/arm64 --manifest {{registry}}/{{coreos_image}}:latest -f coreos-agent/Dockerfile coreos-agent/
+    podman build --platform linux/amd64 --build-arg TARGETARCH=amd64 --manifest {{registry}}/{{coreos_image}}:latest -f coreos-agent/Dockerfile coreos-agent/
+    podman build --platform linux/arm64 --build-arg TARGETARCH=arm64 --manifest {{registry}}/{{coreos_image}}:latest -f coreos-agent/Dockerfile coreos-agent/
     podman manifest push {{registry}}/{{coreos_image}}:latest docker://{{registry}}/{{coreos_image}}:latest
     podman manifest push {{registry}}/{{coreos_image}}:latest docker://{{registry}}/{{coreos_image}}:{{date_tag}}
     podman manifest rm {{registry}}/{{coreos_image}}:latest
@@ -71,8 +71,8 @@ coreos-agent-multiarch:
 fedora-agent-multiarch:
     @echo "Building {{fedora_image}} for linux/amd64 and linux/arm64..."
     podman manifest create {{registry}}/{{fedora_image}}:latest
-    podman build --platform linux/amd64 --manifest {{registry}}/{{fedora_image}}:latest -f fedora-agent/Dockerfile fedora-agent/
-    podman build --platform linux/arm64 --manifest {{registry}}/{{fedora_image}}:latest -f fedora-agent/Dockerfile fedora-agent/
+    podman build --platform linux/amd64 --build-arg TARGETARCH=amd64 --manifest {{registry}}/{{fedora_image}}:latest -f fedora-agent/Dockerfile fedora-agent/
+    podman build --platform linux/arm64 --build-arg TARGETARCH=arm64 --manifest {{registry}}/{{fedora_image}}:latest -f fedora-agent/Dockerfile fedora-agent/
     podman manifest push {{registry}}/{{fedora_image}}:latest docker://{{registry}}/{{fedora_image}}:latest
     podman manifest push {{registry}}/{{fedora_image}}:latest docker://{{registry}}/{{fedora_image}}:{{date_tag}}
     podman manifest rm {{registry}}/{{fedora_image}}:latest
