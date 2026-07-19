@@ -27,6 +27,16 @@ if [ -d /opt/opencode-agents ]; then
     cp /opt/opencode-agents/*.md "$HOME/.config/opencode/agents/" 2>/dev/null || true
 fi
 
+if [ -d /opt/opencode-config/plugins ]; then
+    mkdir -p "$HOME/.config/opencode/plugins"
+    cp /opt/opencode-config/plugins/*.js "$HOME/.config/opencode/plugins/" 2>/dev/null || true
+fi
+
+if [ -d /opt/opencode-config/node_modules ]; then
+    mkdir -p "$HOME/.config/opencode/node_modules"
+    cp -r /opt/opencode-config/node_modules/* "$HOME/.config/opencode/node_modules/" 2>/dev/null || true
+fi
+
 if [ -f /opt/tea-config/config.yml ]; then
     mkdir -p "$HOME/.config/tea"
     cp /opt/tea-config/config.yml "$HOME/.config/tea/config.yml"

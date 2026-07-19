@@ -34,5 +34,12 @@ COPY skills/ /opt/opencode-skills/
 COPY opencode.json AGENTS.md /opt/opencode-config/
 COPY commands/ /opt/opencode-commands/
 COPY agents/ /opt/opencode-agents/
+COPY plugins/ /opt/opencode-config/plugins/
+
+# Install @opencode-ai/plugin so the webfetch-ua dynamic import resolves
+RUN mkdir -p /opt/opencode-config && \
+    cd /opt/opencode-config && \
+    npm init -y 2>/dev/null && \
+    npm install @opencode-ai/plugin
 
 USER agent

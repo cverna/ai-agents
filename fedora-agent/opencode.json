@@ -12,6 +12,7 @@
       ]
     }
   },
+  "plugin": [["webfetch-ua", { "userAgent": "FedoraAgent/1.0" }]],
   "permission": {
     "external_directory": {
       "/tmp/*": "allow"
