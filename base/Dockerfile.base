@@ -8,18 +8,16 @@ LABEL org.opencontainers.image.source="https://github.com/cverna/ai-agents"
 
 RUN dnf install -y --setopt=install_weak_deps=False \
     jq yq git curl tar uv ripgrep podman-remote gh glab koji bodhi-client \
+    nodejs npm \
     && dnf clean all && rm -rf /var/cache/dnf
 
 RUN ln -s /usr/bin/podman-remote /usr/local/bin/podman
-
-RUN ARCH=$([ "$TARGETARCH" = "amd64" ] && echo "x64" || echo "arm64") && \
-    curl -fsSL "https://github.com/anomalyco/opencode/releases/latest/download/opencode-linux-${ARCH}.tar.gz" | \
-    tar xz -C /tmp && mv /tmp/opencode /usr/local/bin/ && rm -rf /tmp/opencode.tar.gz
 
 COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 RUN uv pip install --system skillsaw
+RUN npm i -g hunkdiff && npm i -g opencode-ai@latest
 
 RUN mkdir -p /opt/opencode-skills/skillsaw-onboard /opt/opencode-skills/skillsaw-fix && \
     curl -fsSL "https://raw.githubusercontent.com/stbenjam/skillsaw/refs/heads/main/.agents/skills/skillsaw-onboard/SKILL.md" \
