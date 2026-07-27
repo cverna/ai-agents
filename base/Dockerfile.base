@@ -19,11 +19,13 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 RUN uv pip install --system skillsaw
 RUN npm i -g hunkdiff && npm i -g opencode-ai@latest
 
-RUN mkdir -p /opt/opencode-skills/skillsaw-onboard /opt/opencode-skills/skillsaw-fix && \
+RUN mkdir -p /opt/opencode-skills/skillsaw-onboard /opt/opencode-skills/skillsaw-fix /opt/opencode-skills/i-have-adhd && \
     curl -fsSL "https://raw.githubusercontent.com/stbenjam/skillsaw/refs/heads/main/.agents/skills/skillsaw-onboard/SKILL.md" \
          -o /opt/opencode-skills/skillsaw-onboard/SKILL.md && \
     curl -fsSL "https://raw.githubusercontent.com/stbenjam/skillsaw/refs/heads/main/.agents/skills/skillsaw-fix/SKILL.md" \
-         -o /opt/opencode-skills/skillsaw-fix/SKILL.md
+         -o /opt/opencode-skills/skillsaw-fix/SKILL.md && \
+    curl -fsSL "https://raw.githubusercontent.com/ayghri/i-have-adhd/c784dcb56b07c8c103323f308b25f7b055008baa/skills/i-have-adhd/SKILL.md" \
+         -o /opt/opencode-skills/i-have-adhd/SKILL.md
 
 RUN useradd -m -u 1000 -s /bin/bash agent && \
     mkdir -p /home/agent/.config /home/agent/.local /workspace && \
