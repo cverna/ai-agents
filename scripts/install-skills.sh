@@ -24,7 +24,7 @@ install_skill stbenjam/skillsaw main skillsaw-fix .agents/skills/skillsaw-fix \
     SKILL.md
 
 install_skill ayghri/i-have-adhd c784dcb56b07c8c103323f308b25f7b055008baa i-have-adhd skills/i-have-adhd \
-    SKILL.md agents/gemini.toml agents/openai.yaml
+    SKILL.md
 
 install_skill hardikpandya/stop-slop 8da1f030185bdfe8471220585162991eaeb970e9 stop-slop . \
     SKILL.md references/examples.md references/phrases.md references/structures.md
