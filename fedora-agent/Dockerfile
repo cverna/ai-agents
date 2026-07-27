@@ -20,16 +20,7 @@ RUN ARCH=$([ "$TARGETARCH" = "amd64" ] && echo "x86_64" || echo "arm64") && \
     curl -fsSL "https://gitea.com/gitea/gitea-mcp/releases/download/v${VER}/gitea-mcp_Linux_${ARCH}.tar.gz" \
     | tar -xz -C /usr/local/bin gitea-mcp && chmod +x /usr/local/bin/gitea-mcp
 
-RUN git clone --depth=1 --filter=blob:none --sparse \
-        https://forge.fedoraproject.org/ai-ml/skills-library.git /tmp/skills-library && \
-    cd /tmp/skills-library && \
-    git sparse-checkout set skills && \
-    cp -r skills/* /opt/opencode-skills/ && \
-    rm -rf /tmp/skills-library
-
-# Overlay local skill patches — files here override upstream versions.
-# Remove when upstream merges the corresponding PR.
-COPY skills/ /opt/opencode-skills/
+RUN install-skills.sh fedora
 
 COPY opencode.json AGENTS.md /opt/opencode-config/
 COPY commands/ /opt/opencode-commands/
