@@ -5,13 +5,23 @@
     "external_directory": {
       "/tmp/*": "allow"
     },
+    "edit": {
+      "~/.config/opencode/skills/*": "allow",
+      "~/.config/opencode/commands/*": "allow",
+      "~/.config/opencode/agents/*": "allow"
+    },
     "read": {
       "*": "allow",
       "*.env": "deny",
       "*.env.*": "deny",
       "*.env.example": "allow",
       "~/.config/*": "deny",
-      "~/.config/opencode/*": "allow"
+      "~/.config/opencode/opencode.json": "deny",
+      "~/.config/opencode/AGENTS.md": "deny",
+      "~/.config/opencode/skills/*": "allow",
+      "~/.config/opencode/commands/*": "allow",
+      "~/.config/opencode/agents/*": "allow",
+      "/opt/opencode-config/*": "deny"
     },
     "bash": {
       "env": "deny",

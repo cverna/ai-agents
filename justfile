@@ -110,20 +110,22 @@ setup-secrets:
 # RUN CONTAINERS
 # ============================================================================
 
-# Run coreos-agent interactively
+# Run coreos-agent interactively (set SKILLS_FORCE_SYNC=1 to reseed from image after rebuild)
 run-coreos:
     podman run -it --rm \
         -v coreos-agent-config:/home/agent/.config \
         -v {{justfile_directory()}}:/workspace \
+        -e SKILLS_FORCE_SYNC=${SKILLS_FORCE_SYNC:-0} \
         {{registry}}/{{coreos_image}}:latest
 
-# Run fedora-agent interactively
+# Run fedora-agent interactively (set SKILLS_FORCE_SYNC=1 to reseed from image after rebuild)
 run-fedora:
     podman run -it --rm \
         -v fedora-agent-config:/home/agent/.config \
         -v {{justfile_directory()}}:/workspace \
         --secret gitea-token \
         -e GITEA_ACCESS_TOKEN_FILE=/run/secrets/gitea-token \
+        -e SKILLS_FORCE_SYNC=${SKILLS_FORCE_SYNC:-0} \
         {{registry}}/{{fedora_image}}:latest
 
 # Run coreos-agent with a shell
@@ -143,3 +145,14 @@ shell-fedora:
         -e GITEA_ACCESS_TOKEN_FILE=/run/secrets/gitea-token \
         --entrypoint /bin/bash \
         {{registry}}/{{fedora_image}}:latest
+
+# ============================================================================
+# REBUILD & RUN
+# ============================================================================
+
+# Rebuild all images and run fedora-agent with forced skill sync from image
+# Use this after committing skill changes to pick them up in the container
+rebuild:
+    @just all
+    @echo "=== Rebuild complete. Starting fedora-agent with force sync... ==="
+    SKILLS_FORCE_SYNC=1 just run-fedora
