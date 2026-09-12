@@ -1,48 +1,45 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "model": "google-vertex-anthropic/claude-sonnet-4-6@default",
+  "update": "disable",
   "mcp": {
-    "github": {
-      "enabled": true,
-      "type": "remote",
-      "url": "https://api.githubcopilot.com/mcp/",
-      "oauth": false,
-      "headers": {
-        "Authorization": "Bearer {file:/run/secrets/github-token}"
+    "servers": {
+      "github": {
+        "type": "remote",
+        "url": "https://api.githubcopilot.com/mcp/",
+        "oauth": false,
+        "codemode": false,
+        "headers": {
+          "Authorization": "Bearer {file:/run/secrets/github-token}"
+        }
       }
     }
   },
-  "permission": {
-    "external_directory": {
-      "/tmp/*": "allow"
-    },
-    "edit": {
-      "~/.config/opencode/skills/*": "allow",
-      "~/.config/opencode/commands/*": "allow",
-      "~/.config/opencode/agents/*": "allow"
-    },
-    "read": {
-      "*": "allow",
-      "*.env": "deny",
-      "*.env.*": "deny",
-      "*.env.example": "allow",
-      "~/.config/*": "deny",
-      "~/.config/opencode/opencode.json": "deny",
-      "~/.config/opencode/AGENTS.md": "deny",
-      "~/.config/opencode/skills/*": "allow",
-      "~/.config/opencode/commands/*": "allow",
-      "~/.config/opencode/agents/*": "allow",
-      "/opt/opencode-config/*": "deny",
-      "/run/secrets/*": "deny"
-    },
-    "bash": {
-      "env": "deny",
-      "env *": "deny",
-      "printenv": "deny",
-      "printenv *": "deny"
-    },
-    "skill": {
-      "*": "allow"
-    }
-  }
+  "permissions": [
+    { "action": "external_directory", "resource": "/tmp/*", "effect": "allow" },
+    { "action": "external_directory", "resource": "/run/secrets/*", "effect": "deny" },
+    { "action": "external_directory", "resource": "/opt/opencode-config/*", "effect": "deny" },
+
+    { "action": "read", "resource": "*", "effect": "allow" },
+    { "action": "read", "resource": "*.env", "effect": "deny" },
+    { "action": "read", "resource": "*.env.*", "effect": "deny" },
+    { "action": "read", "resource": "*.env.example", "effect": "allow" },
+    { "action": "read", "resource": "~/.config/*", "effect": "deny" },
+    { "action": "read", "resource": "~/.config/opencode/skills/*", "effect": "allow" },
+    { "action": "read", "resource": "~/.config/opencode/commands/*", "effect": "allow" },
+    { "action": "read", "resource": "~/.config/opencode/agents/*", "effect": "allow" },
+    { "action": "read", "resource": "/opt/opencode-config/*", "effect": "deny" },
+    { "action": "read", "resource": "/run/secrets/*", "effect": "deny" },
+
+    { "action": "edit", "resource": "~/.config/opencode/skills/*", "effect": "allow" },
+    { "action": "edit", "resource": "~/.config/opencode/commands/*", "effect": "allow" },
+    { "action": "edit", "resource": "~/.config/opencode/agents/*", "effect": "allow" },
+
+    { "action": "shell", "resource": "env", "effect": "deny" },
+    { "action": "shell", "resource": "env *", "effect": "deny" },
+    { "action": "shell", "resource": "printenv", "effect": "deny" },
+    { "action": "shell", "resource": "printenv *", "effect": "deny" },
+
+    { "action": "skill", "resource": "*", "effect": "allow" }
+  ]
 }

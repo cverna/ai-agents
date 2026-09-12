@@ -2,10 +2,13 @@
 description: Analyse today's Fedora Rawhide compose failures - fetch today's Rawhide issue from compose-tracker-issues and triage using the fedora-compose-triage skill
 mode: subagent
 model: opencode/deepseek-v4-flash-free
-permission:
-  edit: deny
-  bash:
-    "*": allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: shell
+    resource: "*"
+    effect: allow
 ---
 
 # Compose Failure Investigator

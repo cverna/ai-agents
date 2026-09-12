@@ -6,13 +6,13 @@
 // only the request `User-Agent` changes.
 //
 // Configuration precedence:
-//   1. Plugin `options.userAgent` (from the `plugin` config entry)
+//   1. Plugin `options.userAgent` (from the `plugins` config entry)
 //   2. OPENCODE_WEBFETCH_USER_AGENT environment variable
 //   3. The built-in default Chrome User-Agent
 //
-// This is a V1-style OpenCode plugin. It exports the named
-// `WebfetchUserAgentPlugin` function returning `{ tool: { webfetch } }`
-// (see https://opencode.ai/docs/plugins/).
+// This is an OpenCode 2 plugin. It default-exports an object with `id` and
+// `setup` (see https://opencode.ai/v2/docs/build/plugins) and is auto-discovered
+// from ~/.config/opencode/plugins/. It has no package dependencies.
 
 const DEFAULT_USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
@@ -193,61 +193,35 @@ async function executeWebfetch(input, userAgent) {
 
   const contentType = response.headers.get("content-type") || ""
   const mime = contentType.split(";")[0]?.trim().toLowerCase() || ""
-  const title = `${url} (${contentType})`
 
   if (mime.startsWith("image/")) {
     const base64 = Buffer.from(new Uint8Array(arrayBuffer)).toString("base64")
     return {
-      title,
-      output: "Image fetched successfully",
+      content: [{ type: "file", uri: `data:${mime};base64,${base64}`, mime }],
       metadata: {},
-      attachments: [{ type: "file", mime, url: `data:${mime};base64,${base64}` }],
     }
   }
 
   const text = new TextDecoder().decode(arrayBuffer)
   const rendered = renderContent(text, contentType, format)
-  return { title, output: rendered, metadata: {} }
+  return { content: [{ type: "text", text: rendered }], metadata: {} }
 }
 
 // ---------------------------------------------------------------------------
-// V1 entry point (named export)
-// See https://opencode.ai/docs/plugins/
-//
-// `@opencode-ai/plugin` is imported dynamically so the file works even when
-// the package is only installed in the OpenCode config directory.
+// V2 entry point. OpenCode 2 reads the default export's `id` and `setup()`.
+// See https://opencode.ai/v2/docs/build/plugins
 // ---------------------------------------------------------------------------
 
-export const WebfetchUserAgentPlugin = async (_input, options) => {
-  const userAgent = resolveUserAgent(options)
-  let tool, schema
-  try {
-    const plugin = await import("@opencode-ai/plugin")
-    tool = plugin.tool
-    schema = plugin.tool.schema
-  } catch {
-    throw new Error(
-      "webfetch-user-agent: @opencode-ai/plugin is required for the V1 plugin entry. " +
-        "Install it in your OpenCode config directory (bun add @opencode-ai/plugin).",
-    )
-  }
-
-  return {
-    tool: {
-      webfetch: tool({
-        description: DESCRIPTION,
-        args: {
-          url: schema.string().describe("The URL to fetch content from"),
-          format: schema
-            .enum(["text", "markdown", "html"])
-            .optional()
-            .describe("Output format (defaults to markdown)"),
-          timeout: schema.number().optional().describe("Optional timeout in seconds (max 120)"),
-        },
-        async execute(input) {
-          return executeWebfetch(input, userAgent)
-        },
-      }),
-    },
-  }
+export default {
+  id: "webfetch-ua",
+  async setup(ctx) {
+    const userAgent = resolveUserAgent(ctx.options)
+    await ctx.tool.transform((editor) => {
+      editor.update("webfetch", (tool) => {
+        tool.description = DESCRIPTION
+        tool.input = JSON_SCHEMA
+        tool.execute = async (input) => executeWebfetch(input, userAgent)
+      })
+    })
+  },
 }

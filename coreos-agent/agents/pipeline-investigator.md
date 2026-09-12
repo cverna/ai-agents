@@ -2,10 +2,13 @@
 description: Deep triage agent for one failed Jenkins build - gather metadata, logs, classify, summarize
 mode: subagent
 model: google-vertex-anthropic/claude-opus-4-6@default
-permission:
-  edit: deny
-  bash:
-    "*": allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: shell
+    resource: "*"
+    effect: allow
 ---
 
 # Pipeline Investigator

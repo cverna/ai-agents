@@ -1,10 +1,13 @@
 ---
 description: Remediation advisor - propose safe next actions after triage (rerun, snooze, escalate) with human approval
 mode: subagent
-permission:
-  edit: deny
-  bash:
-    "*": allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: shell
+    resource: "*"
+    effect: allow
 ---
 
 # Remediation Advisor

@@ -2,10 +2,13 @@
 description: Jira coordination agent - draft COS subtasks and route failures to appropriate teams
 mode: subagent
 model: google-vertex-anthropic/claude-sonnet-4-6@default
-permission:
-  edit: deny
-  bash:
-    "*": allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: shell
+    resource: "*"
+    effect: allow
 ---
 
 # Pipeline Handoff

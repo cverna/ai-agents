@@ -17,7 +17,7 @@ COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 RUN uv pip install --system skillsaw
-RUN npm i -g hunkdiff && npm i -g opencode-ai@latest
+RUN npm i -g hunkdiff && npm i -g @opencode-ai/cli@beta
 
 COPY scripts/install-skills.sh /usr/local/bin/install-skills.sh
 RUN chmod +x /usr/local/bin/install-skills.sh && install-skills.sh base
@@ -30,4 +30,4 @@ WORKDIR /workspace
 USER agent
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD ["opencode"]
+CMD ["opencode2"]
