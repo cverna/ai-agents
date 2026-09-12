@@ -7,7 +7,6 @@ LABEL org.opencontainers.image.source="https://github.com/cverna/ai-agents"
 USER root
 
 ENV KRB5CCNAME=FILE:/tmp/krb5cc
-ENV OPENCODE_WEBFETCH_USER_AGENT=FedoraAgent/1.0
 
 RUN dnf install -y --setopt=install_weak_deps=False \
     fedora-packager krb5-workstation krb5-pkinit fedora-packager-kerberos fedora-review \
@@ -27,5 +26,6 @@ COPY opencode.json AGENTS.md /opt/opencode-config/
 COPY commands/ /opt/opencode-commands/
 COPY agents/ /opt/opencode-agents/
 COPY plugins/ /opt/opencode-config/plugins/
+RUN npm install --prefix /opt/opencode-config --no-audit --no-fund --no-save --package-lock=false htmlparser2
 
 USER agent
