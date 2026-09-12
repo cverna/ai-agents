@@ -8,7 +8,7 @@ This container provides CLI tools for managing CoreOS/RHCOS infrastructure.
 |------|-------------|
 | `coreos-tools` | Jenkins/Jira/OCP management |
 | `jira` | Jira CLI |
-| `gh` | GitHub CLI |
+| `github` | GitHub MCP server (remote) |
 | `glab` | GitLab CLI |
 | `koji` / `brew` | Koji/Brew build system CLI |
 | `bodhi` | Fedora updates system CLI |
@@ -22,7 +22,7 @@ This container provides CLI tools for managing CoreOS/RHCOS infrastructure.
 
 ## When to use
 
-You must use the `gh` cli to interact with GitHub
+You must use the `github` MCP server to interact with GitHub
 You must use the `jira` cli to interact with Jira
 You must use the `glab` cli to interact with GitLab
 

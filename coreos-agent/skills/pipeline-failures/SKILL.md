@@ -254,19 +254,19 @@ cat /tmp/bad-cosa.json | jq -r '.git.commit'
 
 ### Find cosa Changes
 
-```bash
-# List commits between versions
-gh api repos/coreos/coreos-assembler/compare/<old-sha>...<new-sha> \
-  --jq '.commits[] | {sha: .sha[0:7], date: .commit.author.date, message: .commit.message | split("\n")[0]}'
+Use the `github` MCP server to inspect the commit range between the two SHAs:
 
-# Check which files changed
-gh api repos/coreos/coreos-assembler/compare/<old-sha>...<new-sha> \
-  --jq '.files[] | {filename: .filename, status: .status, changes: .changes}'
-
-# Get full diff for a specific file
-gh api repos/coreos/coreos-assembler/compare/<old-sha>...<new-sha> \
-  --jq '.files[] | select(.filename == "<file>") | .patch'
 ```
+# List commits reachable from the newer SHA, then keep commits until <old-sha>
+list_commits: owner=coreos repo=coreos-assembler sha=<new-sha> perPage=100
+
+# Inspect the changed files (and optionally the full patch) for one commit
+get_commit: owner=coreos repo=coreos-assembler sha=<commit-sha> detail=full_patch
+```
+
+`detail=stats` returns per-file status and line counts; `detail=full_patch`
+additionally returns the unified diff and can be large, so request it only for
+the commit you need.
 
 ## Upstream Code Investigation
 
@@ -274,25 +274,24 @@ For deeper root cause analysis, search upstream CoreOS repositories:
 
 ### Search for Code Patterns
 
-```bash
-# Search across CoreOS repos
-gh search code "<pattern>" --repo coreos/coreos-assembler --repo coreos/ignition \
-  --repo coreos/coreos-installer --repo coreos/afterburn \
-  --json repository,path,textMatches
+Use the `github` MCP server `search_code` tool:
 
-# Search OpenShift repos
-gh search code "<pattern>" --repo openshift/os --json repository,path
 ```
+# Search one repository per call (GitHub search syntax)
+query: <pattern> repo:coreos/coreos-assembler
+```
+
+Repeat for `coreos/ignition`, `coreos/coreos-installer`, `coreos/afterburn`,
+and `openshift/os`.
 
 ### Check Recent Changes to Relevant Files
 
-```bash
+```
 # Get commits for a specific file
-gh api "repos/<org>/<repo>/commits?path=<file>&per_page=10" | \
-  jq '.[] | {sha: .sha[0:7], date: .commit.author.date, message: .commit.message | split("\n")[0]}'
+list_commits: owner=<org> repo=<repo> path=<file> perPage=10
 
 # Get file contents
-gh api repos/<org>/<repo>/contents/<path> --jq '.content' | base64 -d
+get_file_contents: owner=<org> repo=<repo> path=<path> ref=<branch>
 ```
 
 ### Key Repositories

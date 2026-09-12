@@ -9,9 +9,9 @@ This container provides CLI tools for Fedora compose triage and package manageme
 | `koji` | Koji build system CLI |
 | `bodhi` | Fedora updates system CLI |
 | `fedpkg` | Fedora package management |
-| `gh` | GitHub CLI |
 | `glab` | GitLab CLI |
 | `gitea-mcp` | Gitea MCP server |
+| `github` | GitHub MCP server (remote) |
 | `podman` | Container management |
 | `jq` | JSON processor |
 | `yq` | YAML processor |
@@ -20,7 +20,7 @@ This container provides CLI tools for Fedora compose triage and package manageme
 
 ## When to use
 
-You must use the `gh` cli to interact with GitHub
+You must use the `github` MCP server to interact with GitHub
 You must use the `glab` cli to interact with GitLab
 You must use the gitea-mcp MCP server to interact with Gitea (forge.fedoraproject.org)
 

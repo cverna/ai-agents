@@ -16,33 +16,42 @@ Generate comprehensive activity summaries for the CoreOS ecosystem.
 
 ## Core Commands (GitHub)
 
+Use the `github` MCP server tools for all GitHub queries. Compute the date with
+`date -d '7 days ago' +%Y-%m-%d` and substitute it for `<since>` below.
+
 ### New Issues
 
-```bash
-gh search issues --owner coreos --created ">=$(date -d '7 days ago' +%Y-%m-%d)" \
-  --limit 100 --json repository,title,author,number,url
+Call `search_issues`:
+
+```
+query: org:coreos created:>=<since>
+perPage: 100
 ```
 
 ### New PRs
 
-```bash
-gh search prs --owner coreos --created ">=$(date -d '7 days ago' +%Y-%m-%d)" \
-  --limit 100 --json repository,title,author,number,url
+Call `search_pull_requests`:
+
+```
+query: org:coreos created:>=<since>
+perPage: 100
 ```
 
 ### Merged PRs
 
-```bash
-gh search prs --owner coreos --merged ">=$(date -d '7 days ago' +%Y-%m-%d)" \
-  --limit 100 --json repository,title,author,number,url
+Call `search_pull_requests`:
+
+```
+query: org:coreos merged:>=<since>
+perPage: 100
 ```
 
 ### Releases
 
-```bash
-for repo in coreos-assembler ignition bootupd afterburn zincati; do
-  gh release list --repo coreos/$repo --limit 3
-done
+Call `list_releases` once per repository (owner `coreos`, `perPage` 3):
+
+```
+coreos-assembler, ignition, bootupd, afterburn, zincati
 ```
 
 ## Key Repositories

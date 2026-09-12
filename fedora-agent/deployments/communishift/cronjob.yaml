@@ -71,6 +71,9 @@ spec:
                 - name: gitea-token
                   mountPath: /run/gitea-secrets
                   readOnly: true
+                - name: github-token
+                  mountPath: /run/secrets
+                  readOnly: true
               resources:
                 requests:
                   memory: 1Gi
@@ -92,3 +95,9 @@ spec:
                 items:
                   - key: gitea-token
                     path: gitea-token
+            - name: github-token
+              secret:
+                secretName: fedora-agent-secrets
+                items:
+                  - key: github-token
+                    path: github-token

@@ -10,6 +10,15 @@
         "-t", "stdio",
         "-H", "https://forge.fedoraproject.org"
       ]
+    },
+    "github": {
+      "enabled": true,
+      "type": "remote",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "oauth": false,
+      "headers": {
+        "Authorization": "Bearer {file:/run/secrets/github-token}"
+      }
     }
   },
   "plugin": [["webfetch-ua", { "userAgent": "FedoraAgent/1.0" }]],

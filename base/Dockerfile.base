@@ -7,7 +7,7 @@ LABEL org.opencontainers.image.description="Minimal base image for AI agents"
 LABEL org.opencontainers.image.source="https://github.com/cverna/ai-agents"
 
 RUN dnf install -y --setopt=install_weak_deps=False \
-    jq yq git curl tar uv ripgrep podman-remote gh glab koji bodhi-client \
+    jq yq git curl tar uv ripgrep podman-remote glab koji bodhi-client \
     nodejs npm \
     && dnf clean all && rm -rf /var/cache/dnf
 

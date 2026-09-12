@@ -54,27 +54,36 @@ docker build -t ghcr.io/cverna/fedora-agent:latest -f fedora-agent/Dockerfile fe
 
 ## Running
 
+The agents read the GitHub token from a file at `/run/secrets/github-token`
+(mounted read-only). The fedora-agent additionally mounts
+`/run/secrets/gitea-token`.
+
 ```bash
 # CoreOS Agent
 docker run -it --rm \
   -v coreos-agent-config:/home/agent/.config \
-  -e GH_TOKEN="your-github-token" \
+  -v ~/.config/github/token:/run/secrets/github-token:ro \
   -v $(pwd):/workspace \
   ghcr.io/cverna/coreos-agent:latest
 
 # Fedora Agent
 docker run -it --rm \
   -v fedora-agent-config:/home/agent/.config \
-  -e GH_TOKEN="your-github-token" \
+  -v ~/.config/github/token:/run/secrets/github-token:ro \
+  -v ~/.config/gitea/token:/run/secrets/gitea-token:ro \
+  -e GITEA_ACCESS_TOKEN_FILE=/run/secrets/gitea-token \
   -v $(pwd):/workspace \
   ghcr.io/cverna/fedora-agent:latest
 ```
+
+With podman, create the secrets once (`just setup-secrets`) and pass them with
+`--secret github-token` / `--secret gitea-token` (see the `justfile`).
 
 ## Environment Variables
 
 | Variable | Description |
 |----------|-------------|
-| `GH_TOKEN` | GitHub Personal Access Token |
+| `GITEA_ACCESS_TOKEN_FILE` | Path to the Gitea token file (fedora-agent) |
 | `JIRA_API_TOKEN` | Jira Personal Access Token (coreos-agent) |
 | `JIRA_AUTH_TYPE` | Set to "bearer" for Jira token auth |
 | `GOOGLE_CLOUD_PROJECT` | GCP project ID (for Vertex AI) |

@@ -15,10 +15,11 @@ FCOS uses `manifest-lock.overrides.yaml` to:
 
 ## Viewing Current Overrides
 
-```bash
-# Fetch current overrides from testing-devel
-gh api -H "Accept: application/vnd.github.raw" \
-  /repos/coreos/fedora-coreos-config/contents/manifest-lock.overrides.yaml?ref=testing-devel
+Use the `github` MCP server `get_file_contents` tool:
+
+```
+get_file_contents: owner=coreos repo=fedora-coreos-config \
+  path=manifest-lock.overrides.yaml ref=testing-devel
 ```
 
 ## Override Format

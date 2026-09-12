@@ -101,10 +101,11 @@ clean-all: clean
 # SECRETS SETUP (run once)
 # ============================================================================
 
-# Create podman secrets required by fedora-agent (run once before first use)
-# Usage: GITEA_TOKEN_FILE=~/.config/gitea/token just setup-secrets
+# Create podman secrets required by the agents (run once before first use)
+# Usage: GITEA_TOKEN_FILE=~/.config/gitea/token GITHUB_TOKEN_FILE=~/.config/github/token just setup-secrets
 setup-secrets:
     podman secret create gitea-token ${GITEA_TOKEN_FILE:-~/.config/gitea/token}
+    podman secret create github-token ${GITHUB_TOKEN_FILE:-~/.config/github/token}
 
 # ============================================================================
 # RUN CONTAINERS
@@ -115,6 +116,7 @@ run-coreos:
     podman run -it --rm \
         -v coreos-agent-config:/home/agent/.config \
         -v {{justfile_directory()}}:/workspace \
+        --secret github-token \
         -e SKILLS_FORCE_SYNC=${SKILLS_FORCE_SYNC:-0} \
         {{registry}}/{{coreos_image}}:latest
 
@@ -124,6 +126,7 @@ run-fedora:
         -v fedora-agent-config:/home/agent/.config \
         -v {{justfile_directory()}}:/workspace \
         --secret gitea-token \
+        --secret github-token \
         -e GITEA_ACCESS_TOKEN_FILE=/run/secrets/gitea-token \
         -e SKILLS_FORCE_SYNC=${SKILLS_FORCE_SYNC:-0} \
         {{registry}}/{{fedora_image}}:latest
@@ -133,6 +136,7 @@ shell-coreos:
     podman run -it --rm \
         -v coreos-agent-config:/home/agent/.config \
         -v {{justfile_directory()}}:/workspace \
+        --secret github-token \
         --entrypoint /bin/bash \
         {{registry}}/{{coreos_image}}:latest
 
@@ -142,6 +146,7 @@ shell-fedora:
         -v fedora-agent-config:/home/agent/.config \
         -v {{justfile_directory()}}:/workspace \
         --secret gitea-token \
+        --secret github-token \
         -e GITEA_ACCESS_TOKEN_FILE=/run/secrets/gitea-token \
         --entrypoint /bin/bash \
         {{registry}}/{{fedora_image}}:latest

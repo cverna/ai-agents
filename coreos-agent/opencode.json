@@ -1,6 +1,17 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "model": "google-vertex-anthropic/claude-sonnet-4-6@default",
+  "mcp": {
+    "github": {
+      "enabled": true,
+      "type": "remote",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "oauth": false,
+      "headers": {
+        "Authorization": "Bearer {file:/run/secrets/github-token}"
+      }
+    }
+  },
   "permission": {
     "external_directory": {
       "/tmp/*": "allow"
@@ -21,7 +32,8 @@
       "~/.config/opencode/skills/*": "allow",
       "~/.config/opencode/commands/*": "allow",
       "~/.config/opencode/agents/*": "allow",
-      "/opt/opencode-config/*": "deny"
+      "/opt/opencode-config/*": "deny",
+      "/run/secrets/*": "deny"
     },
     "bash": {
       "env": "deny",

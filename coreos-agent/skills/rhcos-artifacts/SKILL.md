@@ -56,8 +56,12 @@ coreos-tools jenkins builds artifacts <job-name> <good-build> --download coreos-
 
 # Compare
 diff /tmp/good-cosa.json /tmp/failed-cosa.json
+```
 
-# Find commits between versions
-gh api repos/coreos/coreos-assembler/compare/<old-commit>...<new-commit> \
-  --jq '.commits[] | {sha: .sha[0:7], date: .commit.author.date, message: .commit.message | split("\n")[0]}'
+Then find the commits between the two versions with the `github` MCP server:
+list commits reachable from the newer SHA and keep them until you reach the
+older SHA.
+
+```
+list_commits: owner=coreos repo=coreos-assembler sha=<new-commit> perPage=100
 ```
