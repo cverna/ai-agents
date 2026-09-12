@@ -1,6 +1,7 @@
 FROM quay.io/fedora/fedora:44
 
 ARG TARGETARCH
+ARG RIPWIRE_VERSION=0.6.0
 
 LABEL org.opencontainers.image.title="AI Agents Base"
 LABEL org.opencontainers.image.description="Minimal base image for AI agents"
@@ -21,6 +22,28 @@ RUN npm i -g hunkdiff && npm i -g @opencode-ai/cli@beta
 
 COPY scripts/install-skills.sh /usr/local/bin/install-skills.sh
 RUN chmod +x /usr/local/bin/install-skills.sh && install-skills.sh base
+
+# ripwire: one pinned release tarball carries both the CLI and its agent skills.
+# TARGETARCH is set for multi-arch CI builds; fall back to the build platform for local builds.
+RUN set -eux; \
+    case "${TARGETARCH:-$(uname -m)}" in \
+      amd64|x86_64) RW_ARCH=x64 ;; \
+      arm64|aarch64) RW_ARCH=arm64 ;; \
+      *) echo "ripwire: unsupported arch ${TARGETARCH:-$(uname -m)}" >&2; exit 1 ;; \
+    esac; \
+    tb="ripwire-${RIPWIRE_VERSION}-linux-${RW_ARCH}.tar.gz"; \
+    url="https://github.com/redhat-et/ripwire/releases/download/v${RIPWIRE_VERSION}"; \
+    curl -fsSL -o "/tmp/${tb}" "${url}/${tb}"; \
+    curl -fsSL -o "/tmp/${tb}.sha256" "${url}/${tb}.sha256"; \
+    ( cd /tmp && sha256sum -c "${tb}.sha256" ); \
+    tar -xzf "/tmp/${tb}" -C /tmp; \
+    src="/tmp/ripwire-${RIPWIRE_VERSION}-linux-${RW_ARCH}"; \
+    install -m 0755 "${src}/ripwire" /usr/local/bin/ripwire; \
+    for d in "${src}"/skills/ripwire-*/; do \
+      cp -r "$d" /opt/opencode-skills/; \
+    done; \
+    rm -rf /opt/opencode-skills/ripwire-opt-remarks "${src}" "/tmp/${tb}"*; \
+    ripwire --version
 
 RUN useradd -m -u 1000 -s /bin/bash agent && \
     mkdir -p /home/agent/.config /home/agent/.local /workspace && \
