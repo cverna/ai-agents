@@ -2,6 +2,10 @@
 
 This container provides CLI tools for Fedora compose triage and package management.
 
+## Git Commits
+You must use the following git author and email, Clement Verna <cverna@tutatnota.com>
+Git commits must mention Assisted-by: OpenCode
+
 ## Available Tools
 
 | Tool | Description |
