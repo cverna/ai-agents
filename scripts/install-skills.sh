@@ -19,13 +19,13 @@ install_skill() {
 
 case "${1:-base}" in
     base)
-        install_skill https://raw.githubusercontent.com/stbenjam/skillsaw/main/.agents/skills/skillsaw-onboard skillsaw-onboard \
+        install_skill https://raw.githubusercontent.com/stbenjam/skillsaw/81e21e7a17691db903381f3974bc8504b9af129a/.agents/skills/skillsaw-onboard skillsaw-onboard \
             SKILL.md
 
-        install_skill https://raw.githubusercontent.com/stbenjam/skillsaw/main/.agents/skills/skillsaw-fix skillsaw-fix \
+        install_skill https://raw.githubusercontent.com/stbenjam/skillsaw/81e21e7a17691db903381f3974bc8504b9af129a/.agents/skills/skillsaw-fix skillsaw-fix \
             SKILL.md
 
-        install_skill https://raw.githubusercontent.com/ayghri/i-have-adhd/c784dcb56b07c8c103323f308b25f7b055008baa/skills/i-have-adhd i-have-adhd \
+        install_skill https://raw.githubusercontent.com/ayghri/i-have-adhd/0a84de401019a3a822248df586d88a2b56f8c6af/skills/i-have-adhd i-have-adhd \
             SKILL.md
 
         install_skill https://raw.githubusercontent.com/hardikpandya/stop-slop/8da1f030185bdfe8471220585162991eaeb970e9 stop-slop \
@@ -33,10 +33,10 @@ case "${1:-base}" in
         ;;
 
     fedora)
-        install_skill https://forge.fedoraproject.org/ai-ml/skills-library/raw/commit/e3f27d1fb649409121df1f4a4c50b6bf5e73682d84759a37152bcc3f7635e07f/skills/fedora-compose-triage fedora-compose-triage \
-            SKILL.md
+        install_skill https://forge.fedoraproject.org/ai-ml/skills-library/raw/commit/587d4e67d8e23b365e41410a088be5c9d443ff1df037331bb3a4f869a1bd91b0/skills/fedora-compose-triage fedora-compose-triage \
+            SKILL.md references/soname-bumps.md
 
-        install_skill https://forge.fedoraproject.org/ai-ml/skills-library/raw/commit/e3f27d1fb649409121df1f4a4c50b6bf5e73682d84759a37152bcc3f7635e07f/skills/fedora-ftbfs-search fedora-ftbfs-search \
+        install_skill https://forge.fedoraproject.org/ai-ml/skills-library/raw/commit/587d4e67d8e23b365e41410a088be5c9d443ff1df037331bb3a4f869a1bd91b0/skills/fedora-ftbfs-search fedora-ftbfs-search \
             SKILL.md
         ;;
 

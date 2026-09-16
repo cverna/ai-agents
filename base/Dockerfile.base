@@ -1,7 +1,7 @@
 FROM quay.io/fedora/fedora:44
 
 ARG TARGETARCH
-ARG RIPWIRE_VERSION=0.6.0
+ARG RIPWIRE_VERSION=0.6.1
 
 LABEL org.opencontainers.image.title="AI Agents Base"
 LABEL org.opencontainers.image.description="Minimal base image for AI agents"
