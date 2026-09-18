@@ -37,6 +37,9 @@ spec:
 
                   # === Init: Copy OpenCode configs from image ===
                   cp /opt/opencode-config/opencode.json "$HOME/.config/opencode/"
+                  # OpenShift reserves /run/secrets (SA token + rhsm), so the
+                  # GitHub token is mounted at /run/github-secrets instead.
+                  sed -i 's#/run/secrets/github-token#/run/github-secrets/github-token#g' "$HOME/.config/opencode/opencode.json"
                   cp /opt/opencode-config/AGENTS.md "$HOME/.config/opencode/"
                   mkdir -p "$HOME/.config/opencode/commands"
                   cp /opt/opencode-commands/*.md "$HOME/.config/opencode/commands/" 2>/dev/null || true
@@ -73,7 +76,7 @@ spec:
                   mountPath: /run/gitea-secrets
                   readOnly: true
                 - name: github-token
-                  mountPath: /run/secrets
+                  mountPath: /run/github-secrets
                   readOnly: true
               resources:
                 requests:
