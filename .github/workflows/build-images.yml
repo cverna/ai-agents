@@ -2,7 +2,7 @@ name: Build and Push Images
 
 on:
   push:
-    branches: [main]
+    branches: [main, openshift-v1]
 
 jobs:
   build-base:
@@ -21,6 +21,16 @@ jobs:
 
       - name: Log in to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Set image tags
+        run: |
+          if [ "${GITHUB_REF_NAME}" = "main" ]; then
+            echo "IMAGE_TAG=latest" >> "$GITHUB_ENV"
+            echo "IMAGE_DATE_TAG=$(date +%Y%m%d)" >> "$GITHUB_ENV"
+          else
+            echo "IMAGE_TAG=v1" >> "$GITHUB_ENV"
+            echo "IMAGE_DATE_TAG=v1-$(date +%Y%m%d)" >> "$GITHUB_ENV"
+          fi
 
       - name: Build and push base image (multi-arch)
         run: just base-multiarch
@@ -43,6 +53,16 @@ jobs:
       - name: Log in to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
 
+      - name: Set image tags
+        run: |
+          if [ "${GITHUB_REF_NAME}" = "main" ]; then
+            echo "IMAGE_TAG=latest" >> "$GITHUB_ENV"
+            echo "IMAGE_DATE_TAG=$(date +%Y%m%d)" >> "$GITHUB_ENV"
+          else
+            echo "IMAGE_TAG=v1" >> "$GITHUB_ENV"
+            echo "IMAGE_DATE_TAG=v1-$(date +%Y%m%d)" >> "$GITHUB_ENV"
+          fi
+
       - name: Build and push coreos-agent (multi-arch)
         run: just coreos-agent-multiarch
 
@@ -63,6 +83,16 @@ jobs:
 
       - name: Log in to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Set image tags
+        run: |
+          if [ "${GITHUB_REF_NAME}" = "main" ]; then
+            echo "IMAGE_TAG=latest" >> "$GITHUB_ENV"
+            echo "IMAGE_DATE_TAG=$(date +%Y%m%d)" >> "$GITHUB_ENV"
+          else
+            echo "IMAGE_TAG=v1" >> "$GITHUB_ENV"
+            echo "IMAGE_DATE_TAG=v1-$(date +%Y%m%d)" >> "$GITHUB_ENV"
+          fi
 
       - name: Build and push fedora-agent (multi-arch)
         run: just fedora-agent-multiarch

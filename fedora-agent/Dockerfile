@@ -1,4 +1,5 @@
-FROM ghcr.io/cverna/ai-agents-base:latest
+ARG BASE_TAG=latest
+FROM ghcr.io/cverna/ai-agents-base:${BASE_TAG}
 
 LABEL org.opencontainers.image.title="Fedora Agent"
 LABEL org.opencontainers.image.description="AI assistant for Fedora compose/triage"

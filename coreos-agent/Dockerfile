@@ -1,4 +1,5 @@
-FROM ghcr.io/cverna/ai-agents-base:latest
+ARG BASE_TAG=latest
+FROM ghcr.io/cverna/ai-agents-base:${BASE_TAG}
 
 ARG TARGETARCH
 

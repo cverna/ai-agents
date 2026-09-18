@@ -18,7 +18,8 @@ registry := "ghcr.io/cverna"
 base_image := "ai-agents-base"
 coreos_image := "coreos-agent"
 fedora_image := "fedora-agent"
-date_tag := `date +%Y%m%d`
+tag := env_var_or_default("IMAGE_TAG", "latest")
+date_tag := env_var_or_default("IMAGE_DATE_TAG", `date +%Y%m%d`)
 
 # Default: show available recipes
 default:
@@ -30,15 +31,15 @@ default:
 
 # Build base image
 base:
-    podman build -t {{registry}}/{{base_image}}:latest -f base/Dockerfile.base .
+    podman build -t {{registry}}/{{base_image}}:{{tag}} -f base/Dockerfile.base .
 
 # Build coreos-agent (requires base image)
 coreos-agent:
-    podman build -t {{registry}}/{{coreos_image}}:latest -f coreos-agent/Dockerfile coreos-agent/
+    podman build --build-arg BASE_TAG={{tag}} -t {{registry}}/{{coreos_image}}:{{tag}} -f coreos-agent/Dockerfile coreos-agent/
 
 # Build fedora-agent (requires base image)
 fedora-agent:
-    podman build -t {{registry}}/{{fedora_image}}:latest -f fedora-agent/Dockerfile fedora-agent/
+    podman build --build-arg BASE_TAG={{tag}} -t {{registry}}/{{fedora_image}}:{{tag}} -f fedora-agent/Dockerfile fedora-agent/
 
 # Build all images (local)
 all: base coreos-agent fedora-agent
@@ -49,33 +50,33 @@ all: base coreos-agent fedora-agent
 
 # Build and push base image (multi-arch)
 base-multiarch:
-    @echo "Building {{base_image}} for linux/amd64 and linux/arm64..."
-    podman manifest create {{registry}}/{{base_image}}:latest
-    podman build --platform linux/amd64 --build-arg TARGETARCH=amd64 --manifest {{registry}}/{{base_image}}:latest -f base/Dockerfile.base .
-    podman build --platform linux/arm64 --build-arg TARGETARCH=arm64 --manifest {{registry}}/{{base_image}}:latest -f base/Dockerfile.base .
-    podman manifest push {{registry}}/{{base_image}}:latest docker://{{registry}}/{{base_image}}:latest
-    podman manifest push {{registry}}/{{base_image}}:latest docker://{{registry}}/{{base_image}}:{{date_tag}}
-    podman manifest rm {{registry}}/{{base_image}}:latest
+    @echo "Building {{base_image}} ({{tag}}) for linux/amd64 and linux/arm64..."
+    podman manifest create {{registry}}/{{base_image}}:{{tag}}
+    podman build --platform linux/amd64 --build-arg TARGETARCH=amd64 --manifest {{registry}}/{{base_image}}:{{tag}} -f base/Dockerfile.base .
+    podman build --platform linux/arm64 --build-arg TARGETARCH=arm64 --manifest {{registry}}/{{base_image}}:{{tag}} -f base/Dockerfile.base .
+    podman manifest push {{registry}}/{{base_image}}:{{tag}} docker://{{registry}}/{{base_image}}:{{tag}}
+    podman manifest push {{registry}}/{{base_image}}:{{tag}} docker://{{registry}}/{{base_image}}:{{date_tag}}
+    podman manifest rm {{registry}}/{{base_image}}:{{tag}}
 
 # Build and push coreos-agent (multi-arch, requires base image in registry)
 coreos-agent-multiarch:
-    @echo "Building {{coreos_image}} for linux/amd64 and linux/arm64..."
-    podman manifest create {{registry}}/{{coreos_image}}:latest
-    podman build --platform linux/amd64 --build-arg TARGETARCH=amd64 --manifest {{registry}}/{{coreos_image}}:latest -f coreos-agent/Dockerfile coreos-agent/
-    podman build --platform linux/arm64 --build-arg TARGETARCH=arm64 --manifest {{registry}}/{{coreos_image}}:latest -f coreos-agent/Dockerfile coreos-agent/
-    podman manifest push {{registry}}/{{coreos_image}}:latest docker://{{registry}}/{{coreos_image}}:latest
-    podman manifest push {{registry}}/{{coreos_image}}:latest docker://{{registry}}/{{coreos_image}}:{{date_tag}}
-    podman manifest rm {{registry}}/{{coreos_image}}:latest
+    @echo "Building {{coreos_image}} ({{tag}}) for linux/amd64 and linux/arm64..."
+    podman manifest create {{registry}}/{{coreos_image}}:{{tag}}
+    podman build --platform linux/amd64 --build-arg TARGETARCH=amd64 --build-arg BASE_TAG={{tag}} --manifest {{registry}}/{{coreos_image}}:{{tag}} -f coreos-agent/Dockerfile coreos-agent/
+    podman build --platform linux/arm64 --build-arg TARGETARCH=arm64 --build-arg BASE_TAG={{tag}} --manifest {{registry}}/{{coreos_image}}:{{tag}} -f coreos-agent/Dockerfile coreos-agent/
+    podman manifest push {{registry}}/{{coreos_image}}:{{tag}} docker://{{registry}}/{{coreos_image}}:{{tag}}
+    podman manifest push {{registry}}/{{coreos_image}}:{{tag}} docker://{{registry}}/{{coreos_image}}:{{date_tag}}
+    podman manifest rm {{registry}}/{{coreos_image}}:{{tag}}
 
 # Build and push fedora-agent (multi-arch, requires base image in registry)
 fedora-agent-multiarch:
-    @echo "Building {{fedora_image}} for linux/amd64 and linux/arm64..."
-    podman manifest create {{registry}}/{{fedora_image}}:latest
-    podman build --platform linux/amd64 --build-arg TARGETARCH=amd64 --manifest {{registry}}/{{fedora_image}}:latest -f fedora-agent/Dockerfile fedora-agent/
-    podman build --platform linux/arm64 --build-arg TARGETARCH=arm64 --manifest {{registry}}/{{fedora_image}}:latest -f fedora-agent/Dockerfile fedora-agent/
-    podman manifest push {{registry}}/{{fedora_image}}:latest docker://{{registry}}/{{fedora_image}}:latest
-    podman manifest push {{registry}}/{{fedora_image}}:latest docker://{{registry}}/{{fedora_image}}:{{date_tag}}
-    podman manifest rm {{registry}}/{{fedora_image}}:latest
+    @echo "Building {{fedora_image}} ({{tag}}) for linux/amd64 and linux/arm64..."
+    podman manifest create {{registry}}/{{fedora_image}}:{{tag}}
+    podman build --platform linux/amd64 --build-arg TARGETARCH=amd64 --build-arg BASE_TAG={{tag}} --manifest {{registry}}/{{fedora_image}}:{{tag}} -f fedora-agent/Dockerfile fedora-agent/
+    podman build --platform linux/arm64 --build-arg TARGETARCH=arm64 --build-arg BASE_TAG={{tag}} --manifest {{registry}}/{{fedora_image}}:{{tag}} -f fedora-agent/Dockerfile fedora-agent/
+    podman manifest push {{registry}}/{{fedora_image}}:{{tag}} docker://{{registry}}/{{fedora_image}}:{{tag}}
+    podman manifest push {{registry}}/{{fedora_image}}:{{tag}} docker://{{registry}}/{{fedora_image}}:{{date_tag}}
+    podman manifest rm {{registry}}/{{fedora_image}}:{{tag}}
 
 # Build all images (CI, multi-arch with push)
 ci: base-multiarch coreos-agent-multiarch fedora-agent-multiarch

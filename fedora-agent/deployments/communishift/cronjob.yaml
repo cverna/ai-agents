@@ -25,7 +25,8 @@ spec:
             runAsNonRoot: true
           containers:
             - name: agent
-              image: ghcr.io/cverna/fedora-agent:latest
+              image: ghcr.io/cverna/fedora-agent:v1
+              imagePullPolicy: Always
               command: ["/bin/bash", "-c"]
               args:
                 - |
