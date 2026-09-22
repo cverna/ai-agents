@@ -1,6 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "opencode-go/deepseek-v4.1-flash",
+  "model": "opencode-go/mimo-v2.6-flash",
   "update": "disable",
   "mcp": {
     "servers": {
