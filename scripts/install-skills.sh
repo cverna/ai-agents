@@ -33,10 +33,16 @@ case "${1:-base}" in
         ;;
 
     fedora)
-        install_skill https://forge.fedoraproject.org/ai-ml/skills-library/raw/commit/e3f27d1fb649409121df1f4a4c50b6bf5e73682d84759a37152bcc3f7635e07f/skills/fedora-compose-triage fedora-compose-triage \
-            SKILL.md
+        # Pin = ai-ml/skills-library main (0505eca) + PR #22. PR is still open, so
+        # the commit lives on the cverna/skills-library fork. Re-pin to the ai-ml
+        # commit once PR #22 merges.
+        SHA=3ef91dcf4e78e01733be1d78e8110b59cbe92813000e4f9dd0ec3eac051fd8e8
+        BASE="https://forge.fedoraproject.org/cverna/skills-library/raw/commit/${SHA}/skills"
 
-        install_skill https://forge.fedoraproject.org/ai-ml/skills-library/raw/commit/e3f27d1fb649409121df1f4a4c50b6bf5e73682d84759a37152bcc3f7635e07f/skills/fedora-ftbfs-search fedora-ftbfs-search \
+        install_skill "$BASE/fedora-compose-triage" fedora-compose-triage \
+            SKILL.md references/soname-bumps.md
+
+        install_skill "$BASE/fedora-ftbfs-search" fedora-ftbfs-search \
             SKILL.md
         ;;
 
