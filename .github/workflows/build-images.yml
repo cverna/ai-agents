@@ -3,6 +3,10 @@ name: Build and Push Images
 on:
   push:
     branches: [main]
+  schedule:
+    # Weekly rebuild to pick up upstream base image and package updates.
+    # Runs Sunday 00:00 UTC (GitHub cron is always UTC).
+    - cron: "0 0 * * 0"
 
 # Each architecture is built on its native GitHub-hosted runner (no QEMU
 # emulation), then the per-arch images are assembled into multi-arch manifests.
