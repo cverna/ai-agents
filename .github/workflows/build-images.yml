@@ -4,65 +4,95 @@ on:
   push:
     branches: [main]
 
+# Each architecture is built on its native GitHub-hosted runner (no QEMU
+# emulation), then the per-arch images are assembled into multi-arch manifests.
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   build-base:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Install just
         uses: taiki-e/install-action@just
 
-      - name: Install QEMU for arm64 emulation
-        uses: docker/setup-qemu-action@v3
-
       - name: Log in to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Build and push base image (multi-arch)
-        run: just base-multiarch
+      - name: Build and push base image (${{ matrix.arch }})
+        run: just build-arch ai-agents-base base/Dockerfile.base . ${{ matrix.arch }}
 
-  build-coreos-agent:
-    runs-on: ubuntu-latest
+  publish-base:
     needs: build-base
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install just
-        uses: taiki-e/install-action@just
-
-      - name: Install QEMU for arm64 emulation
-        uses: docker/setup-qemu-action@v3
-
-      - name: Log in to GHCR
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
-
-      - name: Build and push coreos-agent (multi-arch)
-        run: just coreos-agent-multiarch
-
-  build-fedora-agent:
     runs-on: ubuntu-latest
-    needs: build-base
-    permissions:
-      contents: read
-      packages: write
     steps:
       - uses: actions/checkout@v4
 
       - name: Install just
         uses: taiki-e/install-action@just
 
-      - name: Install QEMU for arm64 emulation
-        uses: docker/setup-qemu-action@v3
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Publish base multi-arch manifest
+        run: just publish-manifest ai-agents-base
+
+  build-agents:
+    needs: publish-base
+    strategy:
+      fail-fast: false
+      matrix:
+        agent:
+          - image: coreos-agent
+            dockerfile: coreos-agent/Dockerfile
+            context: coreos-agent/
+          - image: fedora-agent
+            dockerfile: fedora-agent/Dockerfile
+            context: fedora-agent/
+        arch:
+          - name: amd64
+            runner: ubuntu-latest
+          - name: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.arch.runner }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install just
+        uses: taiki-e/install-action@just
 
       - name: Log in to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Build and push fedora-agent (multi-arch)
-        run: just fedora-agent-multiarch
+      - name: Build and push ${{ matrix.agent.image }} (${{ matrix.arch.name }})
+        run: just build-arch ${{ matrix.agent.image }} ${{ matrix.agent.dockerfile }} ${{ matrix.agent.context }} ${{ matrix.arch.name }}
+
+  publish-agents:
+    needs: build-agents
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [coreos-agent, fedora-agent]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install just
+        uses: taiki-e/install-action@just
+
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Publish ${{ matrix.image }} multi-arch manifest
+        run: just publish-manifest ${{ matrix.image }}

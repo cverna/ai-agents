@@ -9,7 +9,8 @@ Uses `just` (command runner) + `podman`. Key commands:
 | Command | Purpose |
 |---------|---------|
 | `just all` | Build all images locally (native arch) |
-| `just ci` | Build + push multi-arch images (amd64 + arm64) |
+| `just build-arch` | Build + push a single-arch image (used by CI) |
+| `just publish-manifest` | Assemble per-arch images into a multi-arch manifest (used by CI) |
 | `just base` | Build base image only |
 | `just coreos-agent` | Build coreos-agent |
 | `just fedora-agent` | Build fedora-agent |

@@ -5,7 +5,8 @@
 # Usage:
 #   just                  - Show available recipes
 #   just all              - Build all images (local, native arch)
-#   just ci               - Build all images (CI, multi-arch with push)
+#   just build-arch ...   - Build + push a single-arch image (used by CI)
+#   just publish-manifest - Assemble per-arch images into a multi-arch manifest (used by CI)
 #   just run-fedora       - Run fedora-agent interactively
 #
 # Requirements:
@@ -44,41 +45,31 @@ fedora-agent:
 all: base coreos-agent fedora-agent
 
 # ============================================================================
-# CI MULTI-ARCH BUILDS (amd64 + arm64, with push)
+# CI MULTI-ARCH BUILDS (native per-arch build + manifest assembly, with push)
 # ============================================================================
+#
+# The CI workflow builds each architecture on a native GitHub runner
+# (ubuntu-latest for amd64, ubuntu-24.04-arm for arm64) and then assembles the
+# per-arch tags into a single multi-arch manifest. No QEMU emulation involved.
 
-# Build and push base image (multi-arch)
-base-multiarch:
-    @echo "Building {{base_image}} for linux/amd64 and linux/arm64..."
-    podman manifest create {{registry}}/{{base_image}}:latest
-    podman build --platform linux/amd64 --build-arg TARGETARCH=amd64 --manifest {{registry}}/{{base_image}}:latest -f base/Dockerfile.base .
-    podman build --platform linux/arm64 --build-arg TARGETARCH=arm64 --manifest {{registry}}/{{base_image}}:latest -f base/Dockerfile.base .
-    podman manifest push {{registry}}/{{base_image}}:latest docker://{{registry}}/{{base_image}}:latest
-    podman manifest push {{registry}}/{{base_image}}:latest docker://{{registry}}/{{base_image}}:{{date_tag}}
-    podman manifest rm {{registry}}/{{base_image}}:latest
+# Build and push one architecture of an image (CI matrix step)
+# usage: just build-arch <image> <dockerfile> <context> <arch>
+build-arch image dockerfile context arch:
+    @echo "Building {{image}} for linux/{{arch}}..."
+    podman build --platform linux/{{arch}} --build-arg TARGETARCH={{arch}} \
+        -t {{registry}}/{{image}}:{{arch}} -f {{dockerfile}} {{context}}
+    podman push {{registry}}/{{image}}:{{arch}}
 
-# Build and push coreos-agent (multi-arch, requires base image in registry)
-coreos-agent-multiarch:
-    @echo "Building {{coreos_image}} for linux/amd64 and linux/arm64..."
-    podman manifest create {{registry}}/{{coreos_image}}:latest
-    podman build --platform linux/amd64 --build-arg TARGETARCH=amd64 --manifest {{registry}}/{{coreos_image}}:latest -f coreos-agent/Dockerfile coreos-agent/
-    podman build --platform linux/arm64 --build-arg TARGETARCH=arm64 --manifest {{registry}}/{{coreos_image}}:latest -f coreos-agent/Dockerfile coreos-agent/
-    podman manifest push {{registry}}/{{coreos_image}}:latest docker://{{registry}}/{{coreos_image}}:latest
-    podman manifest push {{registry}}/{{coreos_image}}:latest docker://{{registry}}/{{coreos_image}}:{{date_tag}}
-    podman manifest rm {{registry}}/{{coreos_image}}:latest
-
-# Build and push fedora-agent (multi-arch, requires base image in registry)
-fedora-agent-multiarch:
-    @echo "Building {{fedora_image}} for linux/amd64 and linux/arm64..."
-    podman manifest create {{registry}}/{{fedora_image}}:latest
-    podman build --platform linux/amd64 --build-arg TARGETARCH=amd64 --manifest {{registry}}/{{fedora_image}}:latest -f fedora-agent/Dockerfile fedora-agent/
-    podman build --platform linux/arm64 --build-arg TARGETARCH=arm64 --manifest {{registry}}/{{fedora_image}}:latest -f fedora-agent/Dockerfile fedora-agent/
-    podman manifest push {{registry}}/{{fedora_image}}:latest docker://{{registry}}/{{fedora_image}}:latest
-    podman manifest push {{registry}}/{{fedora_image}}:latest docker://{{registry}}/{{fedora_image}}:{{date_tag}}
-    podman manifest rm {{registry}}/{{fedora_image}}:latest
-
-# Build all images (CI, multi-arch with push)
-ci: base-multiarch coreos-agent-multiarch fedora-agent-multiarch
+# Assemble the per-arch tags into a multi-arch manifest and push latest + date tags
+# usage: just publish-manifest <image>
+publish-manifest image:
+    @echo "Publishing {{image}} manifest (linux/amd64, linux/arm64)..."
+    podman manifest create {{registry}}/{{image}}:latest
+    podman manifest add {{registry}}/{{image}}:latest docker://{{registry}}/{{image}}:amd64
+    podman manifest add {{registry}}/{{image}}:latest docker://{{registry}}/{{image}}:arm64
+    podman manifest push {{registry}}/{{image}}:latest docker://{{registry}}/{{image}}:latest
+    podman manifest push {{registry}}/{{image}}:latest docker://{{registry}}/{{image}}:{{date_tag}}
+    podman manifest rm {{registry}}/{{image}}:latest
 
 # ============================================================================
 # CLEANUP
