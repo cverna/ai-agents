@@ -45,41 +45,32 @@ fedora-agent:
 all: base coreos-agent fedora-agent
 
 # ============================================================================
-# CI MULTI-ARCH BUILDS (amd64 + arm64, with push)
+# CI MULTI-ARCH BUILDS (native per-arch build + manifest assembly, with push)
 # ============================================================================
+#
+# The CI workflow builds each architecture on a native GitHub runner
+# (ubuntu-latest for amd64, ubuntu-24.04-arm for arm64) and then assembles the
+# per-arch tags into a single multi-arch manifest. No QEMU emulation involved.
 
-# Build and push base image (multi-arch)
-base-multiarch:
-    @echo "Building {{base_image}} ({{tag}}) for linux/amd64 and linux/arm64..."
-    podman manifest create {{registry}}/{{base_image}}:{{tag}}
-    podman build --platform linux/amd64 --build-arg TARGETARCH=amd64 --manifest {{registry}}/{{base_image}}:{{tag}} -f base/Dockerfile.base .
-    podman build --platform linux/arm64 --build-arg TARGETARCH=arm64 --manifest {{registry}}/{{base_image}}:{{tag}} -f base/Dockerfile.base .
-    podman manifest push {{registry}}/{{base_image}}:{{tag}} docker://{{registry}}/{{base_image}}:{{tag}}
-    podman manifest push {{registry}}/{{base_image}}:{{tag}} docker://{{registry}}/{{base_image}}:{{date_tag}}
-    podman manifest rm {{registry}}/{{base_image}}:{{tag}}
+# Build and push one architecture of an image (CI matrix step)
+# usage: just build-arch <image> <dockerfile> <context> <arch>
+build-arch image dockerfile context arch:
+    @echo "Building {{image}} ({{tag}}) for linux/{{arch}}..."
+    podman build --platform linux/{{arch}} --build-arg TARGETARCH={{arch}} \
+        --build-arg BASE_TAG={{tag}} \
+        -t {{registry}}/{{image}}:{{tag}}-{{arch}} -f {{dockerfile}} {{context}}
+    podman push {{registry}}/{{image}}:{{tag}}-{{arch}}
 
-# Build and push coreos-agent (multi-arch, requires base image in registry)
-coreos-agent-multiarch:
-    @echo "Building {{coreos_image}} ({{tag}}) for linux/amd64 and linux/arm64..."
-    podman manifest create {{registry}}/{{coreos_image}}:{{tag}}
-    podman build --platform linux/amd64 --build-arg TARGETARCH=amd64 --build-arg BASE_TAG={{tag}} --manifest {{registry}}/{{coreos_image}}:{{tag}} -f coreos-agent/Dockerfile coreos-agent/
-    podman build --platform linux/arm64 --build-arg TARGETARCH=arm64 --build-arg BASE_TAG={{tag}} --manifest {{registry}}/{{coreos_image}}:{{tag}} -f coreos-agent/Dockerfile coreos-agent/
-    podman manifest push {{registry}}/{{coreos_image}}:{{tag}} docker://{{registry}}/{{coreos_image}}:{{tag}}
-    podman manifest push {{registry}}/{{coreos_image}}:{{tag}} docker://{{registry}}/{{coreos_image}}:{{date_tag}}
-    podman manifest rm {{registry}}/{{coreos_image}}:{{tag}}
-
-# Build and push fedora-agent (multi-arch, requires base image in registry)
-fedora-agent-multiarch:
-    @echo "Building {{fedora_image}} ({{tag}}) for linux/amd64 and linux/arm64..."
-    podman manifest create {{registry}}/{{fedora_image}}:{{tag}}
-    podman build --platform linux/amd64 --build-arg TARGETARCH=amd64 --build-arg BASE_TAG={{tag}} --manifest {{registry}}/{{fedora_image}}:{{tag}} -f fedora-agent/Dockerfile fedora-agent/
-    podman build --platform linux/arm64 --build-arg TARGETARCH=arm64 --build-arg BASE_TAG={{tag}} --manifest {{registry}}/{{fedora_image}}:{{tag}} -f fedora-agent/Dockerfile fedora-agent/
-    podman manifest push {{registry}}/{{fedora_image}}:{{tag}} docker://{{registry}}/{{fedora_image}}:{{tag}}
-    podman manifest push {{registry}}/{{fedora_image}}:{{tag}} docker://{{registry}}/{{fedora_image}}:{{date_tag}}
-    podman manifest rm {{registry}}/{{fedora_image}}:{{tag}}
-
-# Build all images (CI, multi-arch with push)
-ci: base-multiarch coreos-agent-multiarch fedora-agent-multiarch
+# Assemble the per-arch tags into a multi-arch manifest, pushed as {{tag}} and {{date_tag}}
+# usage: just publish-manifest <image>
+publish-manifest image:
+    @echo "Publishing {{image}} manifest ({{tag}}, {{date_tag}})..."
+    podman manifest create {{registry}}/{{image}}:{{tag}}
+    podman manifest add {{registry}}/{{image}}:{{tag}} docker://{{registry}}/{{image}}:{{tag}}-amd64
+    podman manifest add {{registry}}/{{image}}:{{tag}} docker://{{registry}}/{{image}}:{{tag}}-arm64
+    podman manifest push {{registry}}/{{image}}:{{tag}} docker://{{registry}}/{{image}}:{{tag}}
+    podman manifest push {{registry}}/{{image}}:{{tag}} docker://{{registry}}/{{image}}:{{date_tag}}
+    podman manifest rm {{registry}}/{{image}}:{{tag}}
 
 # ============================================================================
 # CLEANUP

@@ -4,95 +4,125 @@ on:
   push:
     branches: [main, openshift-v1]
 
+# Each architecture is built on its native GitHub-hosted runner (no QEMU
+# emulation), then the per-arch images are assembled into multi-arch manifests.
+permissions:
+  contents: read
+  packages: write
+
 jobs:
+  set-tags:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tags.outputs.tag }}
+      date_tag: ${{ steps.tags.outputs.date_tag }}
+    steps:
+      - name: Choose the image tags for this branch
+        id: tags
+        run: |
+          if [ "${GITHUB_REF_NAME}" = "main" ]; then
+            echo "tag=latest" >> "$GITHUB_OUTPUT"
+            echo "date_tag=$(date +%Y%m%d)" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=v1" >> "$GITHUB_OUTPUT"
+            echo "date_tag=v1-$(date +%Y%m%d)" >> "$GITHUB_OUTPUT"
+          fi
+
   build-base:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
+    needs: set-tags
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    env:
+      IMAGE_TAG: ${{ needs.set-tags.outputs.tag }}
+      IMAGE_DATE_TAG: ${{ needs.set-tags.outputs.date_tag }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Install just
         uses: taiki-e/install-action@just
 
-      - name: Install QEMU for arm64 emulation
-        uses: docker/setup-qemu-action@v3
-
       - name: Log in to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Set image tags
-        run: |
-          if [ "${GITHUB_REF_NAME}" = "main" ]; then
-            echo "IMAGE_TAG=latest" >> "$GITHUB_ENV"
-            echo "IMAGE_DATE_TAG=$(date +%Y%m%d)" >> "$GITHUB_ENV"
-          else
-            echo "IMAGE_TAG=v1" >> "$GITHUB_ENV"
-            echo "IMAGE_DATE_TAG=v1-$(date +%Y%m%d)" >> "$GITHUB_ENV"
-          fi
+      - name: Build and push base image (${{ matrix.arch }})
+        run: just build-arch ai-agents-base base/Dockerfile.base . ${{ matrix.arch }}
 
-      - name: Build and push base image (multi-arch)
-        run: just base-multiarch
-
-  build-coreos-agent:
+  publish-base:
+    needs: [set-tags, build-base]
     runs-on: ubuntu-latest
-    needs: build-base
-    permissions:
-      contents: read
-      packages: write
+    env:
+      IMAGE_TAG: ${{ needs.set-tags.outputs.tag }}
+      IMAGE_DATE_TAG: ${{ needs.set-tags.outputs.date_tag }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Install just
         uses: taiki-e/install-action@just
 
-      - name: Install QEMU for arm64 emulation
-        uses: docker/setup-qemu-action@v3
-
       - name: Log in to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Set image tags
-        run: |
-          if [ "${GITHUB_REF_NAME}" = "main" ]; then
-            echo "IMAGE_TAG=latest" >> "$GITHUB_ENV"
-            echo "IMAGE_DATE_TAG=$(date +%Y%m%d)" >> "$GITHUB_ENV"
-          else
-            echo "IMAGE_TAG=v1" >> "$GITHUB_ENV"
-            echo "IMAGE_DATE_TAG=v1-$(date +%Y%m%d)" >> "$GITHUB_ENV"
-          fi
+      - name: Publish base multi-arch manifest
+        run: just publish-manifest ai-agents-base
 
-      - name: Build and push coreos-agent (multi-arch)
-        run: just coreos-agent-multiarch
-
-  build-fedora-agent:
-    runs-on: ubuntu-latest
-    needs: build-base
-    permissions:
-      contents: read
-      packages: write
+  build-agents:
+    needs: [set-tags, publish-base]
+    strategy:
+      fail-fast: false
+      matrix:
+        agent:
+          - image: coreos-agent
+            dockerfile: coreos-agent/Dockerfile
+            context: coreos-agent/
+          - image: fedora-agent
+            dockerfile: fedora-agent/Dockerfile
+            context: fedora-agent/
+        arch:
+          - name: amd64
+            runner: ubuntu-latest
+          - name: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.arch.runner }}
+    env:
+      IMAGE_TAG: ${{ needs.set-tags.outputs.tag }}
+      IMAGE_DATE_TAG: ${{ needs.set-tags.outputs.date_tag }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Install just
         uses: taiki-e/install-action@just
 
-      - name: Install QEMU for arm64 emulation
-        uses: docker/setup-qemu-action@v3
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build and push ${{ matrix.agent.image }} (${{ matrix.arch.name }})
+        run: just build-arch ${{ matrix.agent.image }} ${{ matrix.agent.dockerfile }} ${{ matrix.agent.context }} ${{ matrix.arch.name }}
+
+  publish-agents:
+    needs: [set-tags, build-agents]
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [coreos-agent, fedora-agent]
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_TAG: ${{ needs.set-tags.outputs.tag }}
+      IMAGE_DATE_TAG: ${{ needs.set-tags.outputs.date_tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install just
+        uses: taiki-e/install-action@just
 
       - name: Log in to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Set image tags
-        run: |
-          if [ "${GITHUB_REF_NAME}" = "main" ]; then
-            echo "IMAGE_TAG=latest" >> "$GITHUB_ENV"
-            echo "IMAGE_DATE_TAG=$(date +%Y%m%d)" >> "$GITHUB_ENV"
-          else
-            echo "IMAGE_TAG=v1" >> "$GITHUB_ENV"
-            echo "IMAGE_DATE_TAG=v1-$(date +%Y%m%d)" >> "$GITHUB_ENV"
-          fi
-
-      - name: Build and push fedora-agent (multi-arch)
-        run: just fedora-agent-multiarch
+      - name: Publish ${{ matrix.image }} multi-arch manifest
+        run: just publish-manifest ${{ matrix.image }}
