@@ -33,10 +33,23 @@ case "${1:-base}" in
         ;;
 
     fedora)
-        install_skill https://forge.fedoraproject.org/ai-ml/skills-library/raw/commit/587d4e67d8e23b365e41410a088be5c9d443ff1df037331bb3a4f869a1bd91b0/skills/fedora-compose-triage fedora-compose-triage \
-            SKILL.md references/soname-bumps.md
+        # Pin = cverna/skills-library branch fedora-compose-triage-references
+        # (1a37914), the live-run hardening of fedora-compose-triage. It adds
+        # four references and an asset, so the file list below must name every
+        # one of them or SKILL.md's links dangle. Re-pin to ai-ml main once
+        # that branch is merged.
+        SHA=1a3791446db3fc295286cab11710ca98c041fb480085555161d26d2a6a3d4a2f
+        BASE="https://forge.fedoraproject.org/cverna/skills-library/raw/commit/${SHA}/skills"
 
-        install_skill https://forge.fedoraproject.org/ai-ml/skills-library/raw/commit/587d4e67d8e23b365e41410a088be5c9d443ff1df037331bb3a4f869a1bd91b0/skills/fedora-ftbfs-search fedora-ftbfs-search \
+        install_skill "$BASE/fedora-compose-triage" fedora-compose-triage \
+            SKILL.md \
+            references/error-patterns.md \
+            references/koji-bodhi-commands.md \
+            references/pungi-tooling-failures.md \
+            references/soname-bumps.md \
+            assets/stage7-example.md
+
+        install_skill "$BASE/fedora-ftbfs-search" fedora-ftbfs-search \
             SKILL.md
         ;;
 
