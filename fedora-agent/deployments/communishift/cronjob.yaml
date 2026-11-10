@@ -193,12 +193,12 @@ spec:
 
                   Step 1 - Read the latest AI analysis comment on #__PREV__ and note the root cause it reports in its ### Affected Images section.
                   Step 2 - Load the fedora-compose-triage skill and follow only Stage 2 (Parse) and Stage 3 (Logs) for issue #__NUM__. Do not run Stage 4-7, do not search Bugzilla, Bodhi or Koji builds, and do not post any comment.
-                  Step 3 - Compare today's root cause with the one in #__PREV__. Answer SAME only when the failing artifact has the same root cause, for example the same missing package or the same broken dependency. A different package, a different failure mechanism, or insufficient evidence means DIFFERENT.
+                  Step 3 - Ask Jev to decide. Call the execute tool and inside it call tools.jev.decide with `state` set to a compact summary of today's root-cause evidence from Step 2 followed by the root cause reported for #__PREV__, labelling them "today" and "prior", and one `noul` question named same_root_cause with instructions "Do both reports describe the same root cause for the same failing artifact?" and criteria true="same missing package, dependency or failure mechanism" false="different package, mechanism, or insufficient evidence". Read `answers.same_root_cause.noul`: a probability of 0.8 or more is SAME, 0.2 or less is DIFFERENT, and anything in between is DIFFERENT so the full triage runs. If tools.jev.decide is unavailable, compare the two reports yourself with the same rule.
 
-                  Your entire final answer must be one line, with no markdown and no other text:
-                  RESULT: SAME - <one sentence of evidence>
+                  Your entire final answer must be one line, with no markdown and no other text, and must include the Jev probability in the evidence sentence:
+                  RESULT: SAME - <one sentence of evidence, with the probability>
                   or
-                  RESULT: DIFFERENT - <one sentence of evidence>
+                  RESULT: DIFFERENT - <one sentence of evidence, with the probability>
                   CONFIRM_EOF
                         CONFIRM_PROMPT="${CONFIRM_PROMPT//__TITLE__/$TITLE}"
                         CONFIRM_PROMPT="${CONFIRM_PROMPT//__PREV_TITLE__/$PREV_TITLE}"
