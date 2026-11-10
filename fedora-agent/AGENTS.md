@@ -16,6 +16,7 @@ Git commits must mention Assisted-by: OpenCode
 | `glab` | GitLab CLI |
 | `gitea-mcp` | Gitea MCP server |
 | `github` | GitHub MCP server (remote) |
+| `atlassian` | Atlassian MCP server (Jira) |
 | `podman` | Container management |
 | `jq` | JSON processor |
 | `yq` | YAML processor |
@@ -26,6 +27,7 @@ Git commits must mention Assisted-by: OpenCode
 ## When to use
 
 You must use the `github` MCP server to interact with GitHub
+You must use the `atlassian` MCP server to interact with Jira (https://redhat.atlassian.net), not the Jira CLI
 You must use the `glab` cli to interact with GitLab
 You must use the gitea-mcp MCP server to interact with Gitea (forge.fedoraproject.org)
 
