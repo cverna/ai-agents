@@ -27,6 +27,7 @@
   "permissions": [
     { "action": "external_directory", "resource": "/tmp/*", "effect": "allow" },
     { "action": "external_directory", "resource": "/run/secrets/*", "effect": "deny" },
+    { "action": "external_directory", "resource": "/run/github-secrets/*", "effect": "deny" },
     { "action": "external_directory", "resource": "/run/gitea-secrets/*", "effect": "deny" },
     { "action": "external_directory", "resource": "/opt/opencode-config/*", "effect": "deny" },
 
@@ -40,6 +41,7 @@
     { "action": "read", "resource": "~/.config/opencode/agents/*", "effect": "allow" },
     { "action": "read", "resource": "/opt/opencode-config/*", "effect": "deny" },
     { "action": "read", "resource": "/run/secrets/*", "effect": "deny" },
+    { "action": "read", "resource": "/run/github-secrets/*", "effect": "deny" },
     { "action": "read", "resource": "/run/gitea-secrets/*", "effect": "deny" },
 
     { "action": "edit", "resource": "~/.config/opencode/skills/*", "effect": "allow" },
