@@ -266,7 +266,7 @@ spec:
 
                   Step 2 - Do the skill's Stages 1-3 (Gather, Parse, Logs) with the Code Mode execute tool. In one JavaScript block: read issue #${NUM} and its comments from https://forge.fedoraproject.org/api/v1/repos/releng/compose-tracker-issues/issues/${NUM}; apply the skill's Stage 2 and Stage 3 rules to pick the failing task logs; cache-bust every kojipkgs URL with ?v=<Date.now()>; verify the compose log's COMPOSE_ID matches the compose in the title; fetch the candidate logs in parallel and return only lines matching the skill's fatal markers plus about 5 lines of context, grouped by log. Do not bring whole logs into the conversation. If execute or fetch is unavailable, fall back to the skill's curl commands.
 
-                  Step 3 - Complete the skill's remaining stages (Analyze, Classify, Fixes, Summarize) for issue #${NUM} using that evidence.
+                  Step 3 - Complete the skill's remaining stages (Analyze, Classify, Fixes, Summarize) for issue #${NUM} using that evidence. For Stage 5, get a second opinion from Jev: call the execute tool and inside it call tools.jev.decide with the Stage 2-4 evidence as `state` and one Jev `choice` question named primary_category over dependency, packaging, infrastructure, configuration, tooling and unknown (Jev uses a `criteria` map of value to description). Treat the returned choice as a second opinion: when it disagrees with the evidence, follow the skill and note why. If tools.jev.decide is unavailable, continue without it.
 
                   Step 4 - Prepare a comment containing ONLY the following, in this exact order:
                   1. This preamble (markdown formatted exactly as shown):
