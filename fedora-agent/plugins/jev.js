@@ -12,6 +12,24 @@
 const ENDPOINT = "https://opencode.ai/inference/systemone/v1/systemone"
 const DEFAULT_MODEL = process.env.JEV_MODEL || "jev-1.13-free"
 
+// The cluster sets OPENCODE_API_KEY explicitly. Interactive installs usually
+// store the Console key as a provider credential instead, so fall back to the
+// active connection for either OpenCode integration.
+async function resolveKey(ctx) {
+  if (process.env.OPENCODE_API_KEY) return process.env.OPENCODE_API_KEY
+  for (const integrationID of ["opencode", "opencode-go"]) {
+    try {
+      const connection = await ctx.integration.connection.active(integrationID)
+      if (!connection) continue
+      const value = await ctx.integration.connection.resolve(connection)
+      if (value && value.type === "key" && value.key) return value.key
+    } catch {
+      // try the next integration
+    }
+  }
+  return undefined
+}
+
 export default {
   id: "jev",
   async setup(ctx) {
@@ -48,8 +66,12 @@ export default {
         },
         options: { namespace: "jev", codemode: true },
         execute: async (input, context) => {
-          const key = process.env.OPENCODE_API_KEY
-          if (!key) throw new Error("OPENCODE_API_KEY is not set in the server environment")
+          const key = await resolveKey(ctx)
+          if (!key) {
+            throw new Error(
+              "No OpenCode API key: set OPENCODE_API_KEY or connect the OpenCode provider",
+            )
+          }
 
           const response = await fetch(ENDPOINT, {
             method: "POST",
